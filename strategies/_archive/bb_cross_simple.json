@@ -1,0 +1,151 @@
+{
+  "name": "bb_cross_simple",
+  "position_mode": "switch",
+  "basic": {
+    "exchange": "binance_um_futures",
+    "symbol": "BTCUSDT",
+    "initial_capital": "2000",
+    "leverage": "20",
+    "compound_profit": false
+  },
+  "signals": [
+    {
+      "signal_id": "bb_cross_up",
+      "signal_type": "single",
+      "indicator_id": "bb",
+      "version": "1",
+      "interval": "15m",
+      "params": {
+        "period": 20,
+        "stddev": 2
+      },
+      "trigger": "price_cross_above_upper"
+    },
+    {
+      "signal_id": "bb_cross_down",
+      "signal_type": "single",
+      "indicator_id": "bb",
+      "version": "1",
+      "interval": "15m",
+      "params": {
+        "period": 20,
+        "stddev": 2
+      },
+      "trigger": "price_cross_below_lower"
+    },
+    {
+      "signal_id": "bb_mid_down",
+      "signal_type": "single",
+      "indicator_id": "bb",
+      "version": "1",
+      "interval": "15m",
+      "params": {
+        "period": 20,
+        "stddev": 2
+      },
+      "trigger": "price_cross_below_middle"
+    },
+    {
+      "signal_id": "bb_mid_up",
+      "signal_type": "single",
+      "indicator_id": "bb",
+      "version": "1",
+      "interval": "15m",
+      "params": {
+        "period": 20,
+        "stddev": 2
+      },
+      "trigger": "price_cross_above_middle"
+    }
+  ],
+  "long": {
+    "entry_rules": [
+      {
+        "entry_rule_id": "e_long",
+        "enabled": true,
+        "sequence": 1,
+        "trigger_signal": "bb_cross_up",
+        "position_pct": "40",
+        "priority": 100
+      }
+    ],
+    "exit_rules": [
+      {
+        "exit_rule_id": "x_long",
+        "enabled": true,
+        "priority": 30,
+        "quantity": "full_position",
+        "exit_action": "close",
+        "trigger_signal": "bb_mid_down"
+      }
+    ]
+  },
+  "short": {
+    "entry_rules": [
+      {
+        "entry_rule_id": "e_short",
+        "enabled": true,
+        "sequence": 1,
+        "trigger_signal": "bb_cross_down",
+        "position_pct": "40",
+        "priority": 100
+      }
+    ],
+    "exit_rules": [
+      {
+        "exit_rule_id": "x_short",
+        "enabled": true,
+        "priority": 30,
+        "quantity": "full_position",
+        "exit_action": "close",
+        "trigger_signal": "bb_mid_up"
+      }
+    ]
+  },
+  "switch_rules": [
+    {
+      "switch_rule_id": "flat_long",
+      "enabled": true,
+      "from_side": "flat",
+      "to_side": "long",
+      "trigger_signal": "bb_cross_up",
+      "close_quantity": "full_position",
+      "next_entry_sequence": 1,
+      "open_policy": "wait_entry_signal",
+      "priority": 100
+    },
+    {
+      "switch_rule_id": "flat_short",
+      "enabled": true,
+      "from_side": "flat",
+      "to_side": "short",
+      "trigger_signal": "bb_cross_down",
+      "close_quantity": "full_position",
+      "next_entry_sequence": 1,
+      "open_policy": "wait_entry_signal",
+      "priority": 100
+    },
+    {
+      "switch_rule_id": "long_short",
+      "enabled": true,
+      "from_side": "long",
+      "to_side": "short",
+      "trigger_signal": "bb_cross_down",
+      "close_quantity": "full_position",
+      "next_entry_sequence": 1,
+      "open_policy": "wait_entry_signal",
+      "priority": 100
+    },
+    {
+      "switch_rule_id": "short_long",
+      "enabled": true,
+      "from_side": "short",
+      "to_side": "long",
+      "trigger_signal": "bb_cross_up",
+      "close_quantity": "full_position",
+      "next_entry_sequence": 1,
+      "open_policy": "wait_entry_signal",
+      "priority": 100
+    }
+  ]
+}

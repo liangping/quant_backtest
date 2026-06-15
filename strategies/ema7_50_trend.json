@@ -1,0 +1,261 @@
+{
+  "name": "ema7_50_trend",
+  "position_mode": "switch",
+  "basic": {
+    "exchange": "binance_um_futures",
+    "symbol": "BTCUSDT",
+    "initial_capital": "1000",
+    "leverage": "10",
+    "compound_profit": true
+  },
+  "signals": [
+    {
+      "signal_id": "ema_golden",
+      "signal_type": "single",
+      "indicator_id": "ema_cross",
+      "version": "1",
+      "interval": "1h",
+      "params": {"fast": 7, "slow": 50},
+      "trigger": "golden_cross"
+    },
+    {
+      "signal_id": "ema_death",
+      "signal_type": "single",
+      "indicator_id": "ema_cross",
+      "version": "1",
+      "interval": "1h",
+      "params": {"fast": 7, "slow": 50},
+      "trigger": "death_cross"
+    },
+    {
+      "signal_id": "er14",
+      "signal_type": "single",
+      "indicator_id": "er",
+      "version": "1",
+      "interval": "1h",
+      "params": {"length": 14},
+      "condition_operator": "none"
+    },
+    {
+      "signal_id": "strong_trend",
+      "signal_type": "expression",
+      "expression": "er14",
+      "expression_operator": "gte",
+      "expression_value": "0.3"
+    },
+    {
+      "signal_id": "filtered_long_entry",
+      "signal_type": "composite",
+      "operator": "all",
+      "conditions": [
+        {
+          "ref": "ema_golden",
+          "ref_type": "user_signal"
+        },
+        {
+          "ref": "strong_trend",
+          "ref_type": "user_signal"
+        }
+      ]
+    },
+    {
+      "signal_id": "filtered_short_entry",
+      "signal_type": "composite",
+      "operator": "all",
+      "conditions": [
+        {
+          "ref": "ema_death",
+          "ref_type": "user_signal"
+        },
+        {
+          "ref": "strong_trend",
+          "ref_type": "user_signal"
+        }
+      ]
+    },
+    {
+      "signal_id": "atr14",
+      "signal_type": "single",
+      "indicator_id": "atr",
+      "version": "1",
+      "interval": "1h",
+      "params": {"length": 14},
+      "condition_operator": "none"
+    },
+    {
+      "signal_id": "long_atr_exit_1",
+      "signal_type": "position_indicator",
+      "atr_signal": "atr14",
+      "atr_operator": "price_lte",
+      "atr_reference": "highest_since_entry",
+      "atr_multiplier": "1.5",
+      "position_metric": "atr"
+    },
+    {
+      "signal_id": "long_atr_exit_2",
+      "signal_type": "position_indicator",
+      "atr_signal": "atr14",
+      "atr_operator": "price_lte",
+      "atr_reference": "highest_since_entry",
+      "atr_multiplier": "3.0",
+      "position_metric": "atr"
+    },
+    {
+      "signal_id": "short_atr_exit_1",
+      "signal_type": "position_indicator",
+      "atr_signal": "atr14",
+      "atr_operator": "price_gte",
+      "atr_reference": "lowest_since_entry",
+      "atr_multiplier": "1.5",
+      "position_metric": "atr"
+    },
+    {
+      "signal_id": "short_atr_exit_2",
+      "signal_type": "position_indicator",
+      "atr_signal": "atr14",
+      "atr_operator": "price_gte",
+      "atr_reference": "lowest_since_entry",
+      "atr_multiplier": "3.0",
+      "position_metric": "atr"
+    },
+    {
+      "signal_id": "loss_pct",
+      "ref": "position_context.loss_pct_on_margin",
+      "value": "30",
+      "ref_type": "position_context",
+      "signal_type": "single",
+      "condition_operator": "gte"
+    }
+  ],
+  "long": {
+    "entry_rules": [
+      {
+        "entry_rule_id": "e_long",
+        "enabled": true,
+        "sequence": 1,
+        "trigger_signal": "filtered_long_entry",
+        "position_pct": "100",
+        "priority": 100
+      }
+    ],
+    "exit_rules": [
+      {
+        "exit_rule_id": "x_long_sl",
+        "enabled": true,
+        "priority": 50,
+        "quantity": "full_position",
+        "exit_action": "stop_loss",
+        "trigger_signal": "loss_pct"
+      },
+      {
+        "exit_rule_id": "x_long_atr",
+        "enabled": true,
+        "priority": 80,
+        "quantity": "full_position",
+        "exit_action": "close",
+        "trigger_signal": "long_atr_exit_1"
+      }
+    ]
+  },
+  "short": {
+    "entry_rules": [
+      {
+        "entry_rule_id": "e_short",
+        "enabled": true,
+        "sequence": 1,
+        "trigger_signal": "filtered_short_entry",
+        "position_pct": "100",
+        "priority": 100
+      }
+    ],
+    "exit_rules": [
+      {
+        "exit_rule_id": "x_short_sl",
+        "enabled": true,
+        "priority": 50,
+        "quantity": "full_position",
+        "exit_action": "stop_loss",
+        "trigger_signal": "loss_pct"
+      },
+      {
+        "exit_rule_id": "x_short_atr",
+        "enabled": true,
+        "priority": 80,
+        "quantity": "full_position",
+        "exit_action": "close",
+        "trigger_signal": "short_atr_exit_1"
+      }
+    ]
+  },
+  "switch_rules": [
+    {
+      "switch_rule_id": "flat_long",
+      "enabled": true,
+      "from_side": "flat",
+      "to_side": "long",
+      "trigger_signal": "filtered_long_entry",
+      "close_quantity": "full_position",
+      "next_entry_sequence": 1,
+      "open_policy": "wait_entry_signal",
+      "priority": 100
+    },
+    {
+      "switch_rule_id": "flat_short",
+      "enabled": true,
+      "from_side": "flat",
+      "to_side": "short",
+      "trigger_signal": "filtered_short_entry",
+      "close_quantity": "full_position",
+      "next_entry_sequence": 1,
+      "open_policy": "wait_entry_signal",
+      "priority": 100
+    },
+    {
+      "switch_rule_id": "long_short",
+      "enabled": true,
+      "from_side": "long",
+      "to_side": "short",
+      "trigger_signal": "filtered_short_entry",
+      "close_quantity": "full_position",
+      "next_entry_sequence": 1,
+      "open_policy": "wait_entry_signal",
+      "priority": 100
+    },
+    {
+      "switch_rule_id": "short_long",
+      "enabled": true,
+      "from_side": "short",
+      "to_side": "long",
+      "trigger_signal": "filtered_long_entry",
+      "close_quantity": "full_position",
+      "next_entry_sequence": 1,
+      "open_policy": "wait_entry_signal",
+      "priority": 100
+    }
+  ],
+  "strategy_risk_rules": [
+    {
+      "risk_rule_id": "max_loss",
+      "enabled": true,
+      "rule_type": "max_loss_percent",
+      "threshold_pct": 5,
+      "priority": 0
+    },
+    {
+      "risk_rule_id": "max_exposure",
+      "enabled": true,
+      "rule_type": "max_exposure_percent",
+      "threshold_pct": 100,
+      "priority": 1
+    },
+    {
+      "risk_rule_id": "cooldown_after_exit",
+      "enabled": true,
+      "rule_type": "cooldown_bars",
+      "value": 3,
+      "after_event": "any_exit_fill",
+      "applies_to": "entry_and_switch",
+      "priority": 100
+    }
+  ]
+}

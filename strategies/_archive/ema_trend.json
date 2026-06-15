@@ -1,0 +1,84 @@
+{
+  "name": "ema_trend_following",
+  "position_mode": "long_only",
+  "side": "long",
+  "basic": {
+    "exchange": "binance_um_futures",
+    "symbol": "BTCUSDT",
+    "initial_capital": "2000",
+    "leverage": "5",
+    "compound_profit": false
+  },
+  "signals": [
+    {
+      "signal_id": "sig_trend_up",
+      "signal_type": "single",
+      "indicator_id": "ema_cross",
+      "version": "1",
+      "interval": "15m",
+      "params": { "fast": 20, "slow": 60 },
+      "trigger": "fast_above_slow"
+    },
+    {
+      "signal_id": "sig_price_above_ema20",
+      "signal_type": "single",
+      "indicator_id": "ema",
+      "version": "1",
+      "interval": "15m",
+      "params": { "period": 20 },
+      "trigger": "price_cross_above"
+    },
+    {
+      "signal_id": "sig_price_below_ema20",
+      "signal_type": "single",
+      "indicator_id": "ema",
+      "version": "1",
+      "interval": "15m",
+      "params": { "period": 20 },
+      "trigger": "price_cross_below"
+    },
+    {
+      "signal_id": "sig_entry",
+      "signal_type": "composite",
+      "operator": "all",
+      "conditions": [
+        { "ref": "sig_trend_up", "ref_type": "user_signal" },
+        { "ref": "sig_price_above_ema20", "ref_type": "user_signal" }
+      ]
+    }
+  ],
+  "long": {
+    "entry_rules": [
+      {
+        "entry_rule_id": "entry_trend",
+        "enabled": true,
+        "sequence": 1,
+        "trigger_signal": "sig_entry",
+        "position_pct": "50",
+        "priority": 100
+      }
+    ],
+    "exit_rules": [
+      {
+        "exit_rule_id": "exit_trend_break",
+        "enabled": true,
+        "trigger_signal": "sig_price_below_ema20",
+        "exit_action": "close",
+        "quantity": "full_position",
+        "priority": 30
+      }
+    ]
+  },
+  "strategy_risk_rules": [
+    {
+      "risk_rule_id": "cooldown_3",
+      "rule_type": "cooldown_bars",
+      "enabled": true,
+      "priority": 100,
+      "after_event": "any_exit_fill",
+      "applies_to": "entry_and_switch",
+      "action": "reject",
+      "value": 3
+    }
+  ]
+}

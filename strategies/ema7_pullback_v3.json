@@ -1,0 +1,92 @@
+{
+  "name": "ema7_pullback_v3",
+  "position_mode": "long_only",
+  "basic": {
+    "exchange": "binance_um_futures",
+    "symbol": "BTCUSDT",
+    "initial_capital": "1000",
+    "leverage": "10",
+    "compound_profit": false
+  },
+  "signals": [
+    {
+      "signal_id": "ema7",
+      "signal_type": "single",
+      "indicator_id": "ema",
+      "version": "1",
+      "interval": "15m",
+      "params": {"period": 7},
+      "trigger": "price_cross_above"
+    },
+    {
+      "signal_id": "atr14",
+      "signal_type": "single",
+      "indicator_id": "atr",
+      "version": "1",
+      "interval": "15m",
+      "params": {"length": 14},
+      "condition_operator": "none"
+    },
+    {
+      "signal_id": "exit_level",
+      "signal_type": "expression",
+      "expression": "close - ema7 + 1.5 * atr14",
+      "expression_operator": "lte",
+      "expression_value": "0"
+    }
+  ],
+  "long": {
+    "entry_rules": [
+      {
+        "entry_rule_id": "e_long",
+        "enabled": true,
+        "sequence": 1,
+        "trigger_signal": "ema7",
+        "position_pct": "100",
+        "priority": 100
+      }
+    ],
+    "exit_rules": [
+      {
+        "exit_rule_id": "x_long_exit",
+        "enabled": true,
+        "priority": 90,
+        "quantity": "full_position",
+        "exit_action": "close",
+        "trigger_signal": "exit_level"
+      }
+    ]
+  },
+  "short": {
+    "entry_rules": [],
+    "exit_rules": []
+  },
+  "switch_rules": [],
+  "strategy_risk_rules": [
+    {
+      "risk_rule_id": "max_loss",
+      "enabled": true,
+      "rule_type": "max_loss_percent",
+      "threshold_pct": 10,
+      "priority": 0
+    },
+    {
+      "risk_rule_id": "max_exposure",
+      "enabled": true,
+      "rule_type": "max_exposure_percent",
+      "threshold_pct": 100,
+      "priority": 1
+    },
+    {
+      "name": "COOLDOWN AFTER EXIT",
+      "value": 6,
+      "action": "reject",
+      "enabled": true,
+      "priority": 100,
+      "rule_type": "cooldown_bars",
+      "applies_to": "entry_and_switch",
+      "after_event": "any_exit_fill",
+      "risk_rule_id": "cooldown_1"
+    }
+  ]
+}

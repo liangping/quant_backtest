@@ -1,0 +1,42 @@
+{
+  "name": "hybrid_v2",
+  "position_mode": "switch",
+  "basic": {
+    "exchange": "binance_um_futures", "symbol": "BTCUSDT",
+    "initial_capital": "2000", "leverage": "20", "compound_profit": false
+  },
+  "signals": [
+    {"signal_id":"macd_entry","signal_type":"single","indicator_id":"macd","version":"1","interval":"15m","params":{"fast":12,"slow":26,"signal":9},"trigger":"below_zero_golden_cross"},
+    {"signal_id":"macd_death","signal_type":"single","indicator_id":"macd","version":"1","interval":"15m","params":{"fast":12,"slow":26,"signal":9},"trigger":"death_cross"},
+    {"signal_id":"macd_above_golden","signal_type":"single","indicator_id":"macd","version":"1","interval":"15m","params":{"fast":12,"slow":26,"signal":9},"trigger":"above_zero_golden_cross"},
+    {"signal_id":"atr14","signal_type":"single","indicator_id":"atr","version":"1","interval":"15m","params":{"length":14},"condition_operator":"none"},
+    {"signal_id":"long_sl","signal_type":"position_atr","atr_signal":"atr14","atr_reference":"average_entry_price","atr_operator":"price_lte","atr_multiplier":"1"},
+    {"signal_id":"long_tp","signal_type":"composite","operator":"any","conditions":[{"ref":"macd_death","ref_type":"user_signal"},{"ref":"macd_above_golden","ref_type":"user_signal"}]},
+    {"signal_id":"bb_upper","signal_type":"single","indicator_id":"bb","version":"1","interval":"15m","params":{"period":20,"stddev":2},"trigger":"price_above_upper"},
+    {"signal_id":"bb_middle","signal_type":"single","indicator_id":"bb","version":"1","interval":"15m","params":{"period":20,"stddev":2},"trigger":"touch_middle"},
+    {"signal_id":"rsi_overbought","signal_type":"single","indicator_id":"rsi","version":"1","interval":"15m","params":{"period":14},"trigger":"overbought"},
+    {"signal_id":"rsi_oversold","signal_type":"single","indicator_id":"rsi","version":"1","interval":"15m","params":{"period":14},"trigger":"oversold"},
+    {"signal_id":"short_entry","signal_type":"composite","operator":"all","window":{"valid_for_bars":3},"conditions":[{"ref":"bb_upper","ref_type":"user_signal"},{"ref":"rsi_overbought","ref_type":"user_signal"}]},
+    {"signal_id":"short_exit","signal_type":"composite","operator":"any","window":{"valid_for_bars":3},"conditions":[{"ref":"bb_middle","ref_type":"user_signal"},{"ref":"rsi_oversold","ref_type":"user_signal"}]}
+  ],
+  "long": {
+    "entry_rules": [{"entry_rule_id":"e_long","enabled":true,"sequence":1,"trigger_signal":"macd_entry","position_pct":"50","priority":100}],
+    "exit_rules": [
+      {"exit_rule_id":"x_long_sl","enabled":true,"priority":60,"quantity":"full_position","exit_action":"stop_loss","trigger_signal":"long_sl"},
+      {"exit_rule_id":"x_long_tp","enabled":true,"priority":90,"quantity":"full_position","exit_action":"take_profit","trigger_signal":"long_tp"}
+    ]
+  },
+  "short": {
+    "entry_rules": [{"entry_rule_id":"e_short","enabled":true,"sequence":1,"trigger_signal":"short_entry","position_pct":"50","priority":100}],
+    "exit_rules": [{"exit_rule_id":"x_short","enabled":true,"priority":30,"quantity":"full_position","exit_action":"take_profit","trigger_signal":"short_exit"}]
+  },
+  "switch_rules": [
+    {"switch_rule_id":"sw_flat_long","enabled":true,"from_side":"flat","to_side":"long","trigger_signal":"macd_entry","close_quantity":"full_position","next_entry_sequence":1,"open_policy":"wait_entry_signal","priority":100},
+    {"switch_rule_id":"sw_flat_short","enabled":true,"from_side":"flat","to_side":"short","trigger_signal":"short_entry","close_quantity":"full_position","next_entry_sequence":1,"open_policy":"wait_entry_signal","priority":100},
+    {"switch_rule_id":"sw_long_short","enabled":true,"from_side":"long","to_side":"short","trigger_signal":"short_entry","close_quantity":"full_position","next_entry_sequence":1,"open_policy":"wait_entry_signal","priority":100},
+    {"switch_rule_id":"sw_short_long","enabled":true,"from_side":"short","to_side":"long","trigger_signal":"macd_entry","close_quantity":"full_position","next_entry_sequence":1,"open_policy":"wait_entry_signal","priority":100}
+  ],
+  "strategy_risk_rules": [
+    {"risk_rule_id":"cd6","rule_type":"cooldown_bars","enabled":true,"priority":100,"after_event":"any_exit_fill","applies_to":"entry_and_switch","action":"reject","value":6}
+  ]
+}

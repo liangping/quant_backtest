@@ -1,0 +1,125 @@
+{
+  "name": "macd_atr_pullback_er_filter",
+  "position_mode": "long_only",
+  "basic": {
+    "exchange": "binance_um_futures",
+    "symbol": "BTCUSDT",
+    "initial_capital": "1000",
+    "leverage": "10",
+    "compound_profit": true
+  },
+  "signals": [
+    {
+      "signal_id": "macd_entry",
+      "signal_type": "single",
+      "indicator_id": "macd",
+      "version": "1",
+      "interval": "15m",
+      "params": {
+        "fast": 12,
+        "slow": 26,
+        "signal": 9
+      },
+      "trigger": "golden_cross"
+    },
+    {
+      "signal_id": "er_trend_filter",
+      "signal_type": "single",
+      "indicator_id": "er",
+      "version": "1",
+      "interval": "15m",
+      "params": {
+        "length": 14
+      },
+      "condition_operator": "gte",
+      "value": "0.2"
+    },
+    {
+      "signal_id": "entry_filter",
+      "signal_type": "composite",
+      "operator": "all",
+      "conditions": [
+        {
+          "ref": "macd_entry",
+          "ref_type": "user_signal"
+        },
+        {
+          "ref": "er_trend_filter",
+          "ref_type": "user_signal"
+        }
+      ]
+    },
+    {
+      "signal_id": "atr14",
+      "signal_type": "single",
+      "indicator_id": "atr",
+      "version": "1",
+      "interval": "15m",
+      "params": {
+        "length": 14
+      },
+      "condition_operator": "none"
+    },
+    {
+      "signal_id": "atr_trailing_exit",
+      "signal_type": "position_indicator",
+      "atr_signal": "atr14",
+      "atr_operator": "price_lte",
+      "atr_reference": "highest_since_entry",
+      "atr_multiplier": "3.0",
+      "position_metric": "atr"
+    }
+  ],
+  "long": {
+    "entry_rules": [
+      {
+        "entry_rule_id": "e_long",
+        "enabled": true,
+        "sequence": 1,
+        "trigger_signal": "entry_filter",
+        "position_pct": "200",
+        "priority": 100
+      }
+    ],
+    "exit_rules": [
+      {
+        "exit_rule_id": "x_atr_trailing",
+        "enabled": true,
+        "priority": 90,
+        "quantity": "full_position",
+        "exit_action": "stop_loss",
+        "trigger_signal": "atr_trailing_exit"
+      }
+    ]
+  },
+  "short": {
+    "entry_rules": [],
+    "exit_rules": []
+  },
+  "switch_rules": [],
+  "strategy_risk_rules": [
+    {
+      "risk_rule_id": "max_loss",
+      "enabled": true,
+      "rule_type": "max_loss_percent",
+      "threshold_pct": 5,
+      "priority": 0
+    },
+    {
+      "risk_rule_id": "max_exposure",
+      "enabled": true,
+      "rule_type": "max_exposure_percent",
+      "threshold_pct": 300,
+      "priority": 1
+    },
+    {
+      "risk_rule_id": "cooldown_after_exit",
+      "enabled": true,
+      "rule_type": "cooldown_bars",
+      "value": 3,
+      "after_event": "any_exit_fill",
+      "applies_to": "entry",
+      "priority": 100
+    }
+  ]
+}

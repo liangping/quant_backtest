@@ -1,0 +1,247 @@
+{
+  "name": "bb_breakout_trend",
+  "position_mode": "switch",
+  "basic": {
+    "exchange": "binance_um_futures",
+    "symbol": "BTCUSDT",
+    "initial_capital": "2000",
+    "leverage": "20",
+    "compound_profit": false
+  },
+  "signals": [
+    {
+      "signal_id": "adx_strong",
+      "signal_type": "single",
+      "indicator_id": "adx",
+      "version": "1",
+      "interval": "15m",
+      "params": {
+        "period": 14
+      },
+      "trigger": "trend_strong"
+    },
+    {
+      "signal_id": "bb_up_break",
+      "signal_type": "single",
+      "indicator_id": "bb",
+      "version": "1",
+      "interval": "15m",
+      "params": {
+        "period": 50,
+        "stddev": 2.5
+      },
+      "trigger": "price_cross_above_upper"
+    },
+    {
+      "signal_id": "bb_down_break",
+      "signal_type": "single",
+      "indicator_id": "bb",
+      "version": "1",
+      "interval": "15m",
+      "params": {
+        "period": 50,
+        "stddev": 2.5
+      },
+      "trigger": "price_cross_below_lower"
+    },
+    {
+      "signal_id": "bb_mid_cross_up",
+      "signal_type": "single",
+      "indicator_id": "bb",
+      "version": "1",
+      "interval": "15m",
+      "params": {
+        "period": 50,
+        "stddev": 2.5
+      },
+      "trigger": "price_cross_below_middle"
+    },
+    {
+      "signal_id": "bb_mid_cross_down",
+      "signal_type": "single",
+      "indicator_id": "bb",
+      "version": "1",
+      "interval": "15m",
+      "params": {
+        "period": 50,
+        "stddev": 2.5
+      },
+      "trigger": "price_cross_above_middle"
+    },
+    {
+      "signal_id": "atr14",
+      "signal_type": "single",
+      "indicator_id": "atr",
+      "version": "1",
+      "interval": "15m",
+      "params": {
+        "length": 14
+      },
+      "condition_operator": "none"
+    },
+    {
+      "signal_id": "long_sl",
+      "signal_type": "position_atr",
+      "atr_signal": "atr14",
+      "atr_reference": "highest_since_entry",
+      "atr_operator": "price_lte",
+      "atr_multiplier": "2"
+    },
+    {
+      "signal_id": "short_sl",
+      "signal_type": "position_atr",
+      "atr_signal": "atr14",
+      "atr_reference": "lowest_since_entry",
+      "atr_operator": "price_gte",
+      "atr_multiplier": "2"
+    },
+    {
+      "signal_id": "long_entry",
+      "signal_type": "composite",
+      "operator": "all",
+      "conditions": [
+        {
+          "ref": "bb_up_break",
+          "ref_type": "user_signal"
+        },
+        {
+          "ref": "adx_strong",
+          "ref_type": "user_signal"
+        }
+      ]
+    },
+    {
+      "signal_id": "short_entry",
+      "signal_type": "composite",
+      "operator": "all",
+      "conditions": [
+        {
+          "ref": "bb_down_break",
+          "ref_type": "user_signal"
+        },
+        {
+          "ref": "adx_strong",
+          "ref_type": "user_signal"
+        }
+      ]
+    }
+  ],
+  "long": {
+    "entry_rules": [
+      {
+        "entry_rule_id": "e_long",
+        "enabled": true,
+        "sequence": 1,
+        "trigger_signal": "long_entry",
+        "position_pct": "40",
+        "priority": 100
+      }
+    ],
+    "exit_rules": [
+      {
+        "exit_rule_id": "x_long_sl",
+        "enabled": true,
+        "priority": 30,
+        "quantity": "full_position",
+        "exit_action": "stop_loss",
+        "trigger_signal": "long_sl"
+      },
+      {
+        "exit_rule_id": "x_long_exit",
+        "enabled": true,
+        "priority": 60,
+        "quantity": "full_position",
+        "exit_action": "close",
+        "trigger_signal": "bb_mid_cross_up"
+      }
+    ]
+  },
+  "short": {
+    "entry_rules": [
+      {
+        "entry_rule_id": "e_short",
+        "enabled": true,
+        "sequence": 1,
+        "trigger_signal": "short_entry",
+        "position_pct": "40",
+        "priority": 100
+      }
+    ],
+    "exit_rules": [
+      {
+        "exit_rule_id": "x_short_sl",
+        "enabled": true,
+        "priority": 30,
+        "quantity": "full_position",
+        "exit_action": "stop_loss",
+        "trigger_signal": "short_sl"
+      },
+      {
+        "exit_rule_id": "x_short_exit",
+        "enabled": true,
+        "priority": 60,
+        "quantity": "full_position",
+        "exit_action": "close",
+        "trigger_signal": "bb_mid_cross_down"
+      }
+    ]
+  },
+  "switch_rules": [
+    {
+      "switch_rule_id": "sw_flat_long",
+      "enabled": true,
+      "from_side": "flat",
+      "to_side": "long",
+      "trigger_signal": "long_entry",
+      "close_quantity": "full_position",
+      "next_entry_sequence": 1,
+      "open_policy": "wait_entry_signal",
+      "priority": 100
+    },
+    {
+      "switch_rule_id": "sw_flat_short",
+      "enabled": true,
+      "from_side": "flat",
+      "to_side": "short",
+      "trigger_signal": "short_entry",
+      "close_quantity": "full_position",
+      "next_entry_sequence": 1,
+      "open_policy": "wait_entry_signal",
+      "priority": 100
+    },
+    {
+      "switch_rule_id": "sw_long_short",
+      "enabled": true,
+      "from_side": "long",
+      "to_side": "short",
+      "trigger_signal": "short_entry",
+      "close_quantity": "full_position",
+      "next_entry_sequence": 1,
+      "open_policy": "wait_entry_signal",
+      "priority": 100
+    },
+    {
+      "switch_rule_id": "sw_short_long",
+      "enabled": true,
+      "from_side": "short",
+      "to_side": "long",
+      "trigger_signal": "long_entry",
+      "close_quantity": "full_position",
+      "next_entry_sequence": 1,
+      "open_policy": "wait_entry_signal",
+      "priority": 100
+    }
+  ],
+  "strategy_risk_rules": [
+    {
+      "risk_rule_id": "cd4",
+      "rule_type": "cooldown_bars",
+      "enabled": true,
+      "priority": 100,
+      "after_event": "any_exit_fill",
+      "applies_to": "entry_and_switch",
+      "action": "reject",
+      "value": 4
+    }
+  ]
+}

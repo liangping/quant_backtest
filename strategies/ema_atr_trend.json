@@ -1,0 +1,35 @@
+{
+  "name": "ema_atr_trend",
+  "position_mode": "switch",
+  "basic": {
+    "exchange": "binance_um_futures", "symbol": "BTCUSDT",
+    "initial_capital": "2000", "leverage": "20", "compound_profit": false
+  },
+  "signals": [
+    {"signal_id":"ema_golden","signal_type":"single","indicator_id":"ema_cross","version":"1","interval":"15m","params":{"fast":10,"slow":30},"trigger":"golden_cross"},
+    {"signal_id":"ema_death","signal_type":"single","indicator_id":"ema_cross","version":"1","interval":"15m","params":{"fast":10,"slow":30},"trigger":"death_cross"},
+    {"signal_id":"atr14","signal_type":"single","indicator_id":"atr","version":"1","interval":"15m","params":{"length":14},"condition_operator":"none"},
+    {"signal_id":"long_sl","signal_type":"position_atr","atr_signal":"atr14","atr_reference":"average_entry_price","atr_operator":"price_lte","atr_multiplier":"1"},
+    {"signal_id":"short_sl","signal_type":"position_atr","atr_signal":"atr14","atr_reference":"average_entry_price","atr_operator":"price_gte","atr_multiplier":"1"}
+  ],
+  "long": {
+    "entry_rules": [{"entry_rule_id":"e_long","enabled":true,"sequence":1,"trigger_signal":"ema_golden","position_pct":"40","priority":100}],
+    "exit_rules": [
+      {"exit_rule_id":"x_long_sl","enabled":true,"priority":60,"quantity":"full_position","exit_action":"stop_loss","trigger_signal":"long_sl"},
+      {"exit_rule_id":"x_long","enabled":true,"priority":90,"quantity":"full_position","exit_action":"take_profit","trigger_signal":"ema_death"}
+    ]
+  },
+  "short": {
+    "entry_rules": [{"entry_rule_id":"e_short","enabled":true,"sequence":1,"trigger_signal":"ema_death","position_pct":"40","priority":100}],
+    "exit_rules": [
+      {"exit_rule_id":"x_short_sl","enabled":true,"priority":60,"quantity":"full_position","exit_action":"stop_loss","trigger_signal":"short_sl"},
+      {"exit_rule_id":"x_short","enabled":true,"priority":90,"quantity":"full_position","exit_action":"take_profit","trigger_signal":"ema_golden"}
+    ]
+  },
+  "switch_rules": [
+    {"switch_rule_id":"flat_long","enabled":true,"from_side":"flat","to_side":"long","trigger_signal":"ema_golden","close_quantity":"full_position","next_entry_sequence":1,"open_policy":"wait_entry_signal","priority":100},
+    {"switch_rule_id":"flat_short","enabled":true,"from_side":"flat","to_side":"short","trigger_signal":"ema_death","close_quantity":"full_position","next_entry_sequence":1,"open_policy":"wait_entry_signal","priority":100},
+    {"switch_rule_id":"long_short","enabled":true,"from_side":"long","to_side":"short","trigger_signal":"ema_death","close_quantity":"full_position","next_entry_sequence":1,"open_policy":"wait_entry_signal","priority":100},
+    {"switch_rule_id":"short_long","enabled":true,"from_side":"short","to_side":"long","trigger_signal":"ema_golden","close_quantity":"full_position","next_entry_sequence":1,"open_policy":"wait_entry_signal","priority":100}
+  ]
+}

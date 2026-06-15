@@ -1,0 +1,111 @@
+{
+  "name": "ema7_pullback_v4",
+  "position_mode": "long_only",
+  "basic": {
+    "exchange": "binance_um_futures",
+    "symbol": "BTCUSDT",
+    "initial_capital": "1000",
+    "leverage": "10",
+    "compound_profit": false
+  },
+  "signals": [
+    {
+      "signal_id": "ema7",
+      "signal_type": "single",
+      "indicator_id": "ema",
+      "version": "1",
+      "interval": "15m",
+      "params": {"period": 7}
+    },
+    {
+      "signal_id": "ema30",
+      "signal_type": "single",
+      "indicator_id": "ema",
+      "version": "1",
+      "interval": "15m",
+      "params": {"period": 30}
+    },
+    {
+      "signal_id": "atr14",
+      "signal_type": "single",
+      "indicator_id": "atr",
+      "version": "1",
+      "interval": "15m",
+      "params": {"length": 14},
+      "condition_operator": "none"
+    },
+    {
+      "signal_id": "cross_above_ema7",
+      "signal_type": "single",
+      "indicator_id": "ema",
+      "version": "1",
+      "interval": "15m",
+      "params": {"period": 7},
+      "trigger": "price_cross_above"
+    },
+    {
+      "signal_id": "trend_up",
+      "signal_type": "expression",
+      "expression": "ema7 - ema30",
+      "expression_operator": "gt",
+      "expression_value": "0"
+    },
+    {
+      "signal_id": "long_entry",
+      "signal_type": "composite",
+      "operator": "all",
+      "window": {"valid_for_bars": 3},
+      "conditions": [
+        {"ref": "cross_above_ema7", "ref_type": "user_signal"},
+        {"ref": "trend_up", "ref_type": "user_signal"}
+      ]
+    },
+    {
+      "signal_id": "exit_level",
+      "signal_type": "expression",
+      "expression": "close - ema7 + 1.5 * atr14",
+      "expression_operator": "lte",
+      "expression_value": "0"
+    }
+  ],
+  "long": {
+    "entry_rules": [
+      {
+        "entry_rule_id": "e_long",
+        "enabled": true,
+        "sequence": 1,
+        "trigger_signal": "long_entry",
+        "position_pct": "100",
+        "priority": 100
+      }
+    ],
+    "exit_rules": [
+      {
+        "exit_rule_id": "x_long_exit",
+        "enabled": true,
+        "priority": 90,
+        "quantity": "full_position",
+        "exit_action": "close",
+        "trigger_signal": "exit_level"
+      }
+    ]
+  },
+  "short": {
+    "entry_rules": [],
+    "exit_rules": []
+  },
+  "switch_rules": [],
+  "strategy_risk_rules": [
+    {
+      "name": "COOLDOWN AFTER EXIT",
+      "value": 6,
+      "action": "reject",
+      "enabled": true,
+      "priority": 100,
+      "rule_type": "cooldown_bars",
+      "applies_to": "entry_and_switch",
+      "after_event": "any_exit_fill",
+      "risk_rule_id": "cooldown_1"
+    }
+  ]
+}

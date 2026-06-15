@@ -1,0 +1,536 @@
+{
+  "long": {
+    "exit_rules": [
+      {
+        "enabled": true,
+        "priority": 70,
+        "quantity": "full_position",
+        "percentage": null,
+        "exit_action": "stop_loss",
+        "exit_rule_id": "long_pre_mid_fail_exit",
+        "trigger_signal": "pre_mid_fail_exit_signal"
+      },
+      {
+        "enabled": true,
+        "priority": 75,
+        "quantity": "full_position",
+        "percentage": null,
+        "exit_action": "close",
+        "exit_rule_id": "long_post_mid_timeout_exit",
+        "trigger_signal": "post_mid_timeout_exit_signal"
+      },
+      {
+        "enabled": true,
+        "priority": 80,
+        "quantity": "full_position",
+        "percentage": null,
+        "exit_action": "stop_loss",
+        "exit_rule_id": "long_loss_timeout_exit",
+        "trigger_signal": "loss_exit_signal"
+      },
+      {
+        "enabled": true,
+        "priority": 90,
+        "quantity": "full_position",
+        "percentage": null,
+        "exit_action": "take_profit",
+        "exit_rule_id": "long_runner_exit",
+        "trigger_signal": "rsi_overbought_5"
+      },
+      {
+        "enabled": true,
+        "priority": 100,
+        "quantity": "percentage",
+        "percentage": "50",
+        "exit_action": "reduce",
+        "exit_rule_id": "long_mid_reduce",
+        "trigger_signal": "bb_mid_up_5"
+      }
+    ],
+    "entry_rules": [
+      {
+        "enabled": true,
+        "priority": 100,
+        "sequence": 1,
+        "position_pct": "50",
+        "entry_rule_id": "long_entry_1",
+        "trigger_signal": "long_entry_signal"
+      }
+    ]
+  },
+  "name": "server_296_dynamic_sizing",
+  "basic": {
+    "symbol": "BTCUSDT",
+    "end_time": "2026-06-08T13:58:00.891Z",
+    "exchange": "binance_um_futures",
+    "leverage": "5",
+    "start_time": "2026-06-01T13:58:00.891Z",
+    "compound_profit": true,
+    "initial_capital": "2000"
+  },
+  "short": {
+    "exit_rules": [
+      {
+        "enabled": true,
+        "priority": 70,
+        "quantity": "full_position",
+        "percentage": null,
+        "exit_action": "stop_loss",
+        "exit_rule_id": "short_pre_mid_fail_exit",
+        "trigger_signal": "pre_mid_fail_exit_signal"
+      },
+      {
+        "enabled": true,
+        "priority": 75,
+        "quantity": "full_position",
+        "percentage": null,
+        "exit_action": "close",
+        "exit_rule_id": "short_post_mid_timeout_exit",
+        "trigger_signal": "post_mid_timeout_exit_signal"
+      },
+      {
+        "enabled": true,
+        "priority": 80,
+        "quantity": "full_position",
+        "percentage": null,
+        "exit_action": "stop_loss",
+        "exit_rule_id": "short_loss_timeout_exit",
+        "trigger_signal": "loss_exit_signal"
+      },
+      {
+        "enabled": true,
+        "priority": 90,
+        "quantity": "full_position",
+        "percentage": null,
+        "exit_action": "take_profit",
+        "exit_rule_id": "short_runner_exit",
+        "trigger_signal": "rsi_oversold_5"
+      },
+      {
+        "enabled": true,
+        "priority": 100,
+        "quantity": "percentage",
+        "percentage": "50",
+        "exit_action": "reduce",
+        "exit_rule_id": "short_mid_reduce",
+        "trigger_signal": "bb_mid_down_5"
+      }
+    ],
+    "entry_rules": [
+      {
+        "enabled": true,
+        "priority": 100,
+        "sequence": 1,
+        "position_pct": "50",
+        "entry_rule_id": "short_entry_1",
+        "trigger_signal": "short_entry_signal"
+      }
+    ]
+  },
+  "signals": [
+    {
+      "signal_id": "sig_trend_up",
+      "signal_type": "single",
+      "indicator_id": "ema",
+      "version": "1",
+      "interval": "15m",
+      "params": {
+        "period": 50
+      },
+      "trigger": "price_above"
+    },
+    {
+      "signal_id": "sig_trend_down",
+      "signal_type": "single",
+      "indicator_id": "ema",
+      "version": "1",
+      "interval": "15m",
+      "params": {
+        "period": 50
+      },
+      "trigger": "price_below"
+    },
+    {
+      "params": {
+        "period": 14
+      },
+      "trigger": "oversold",
+      "version": "1",
+      "interval": "15m",
+      "signal_id": "rsi_oversold_5",
+      "signal_type": "single",
+      "indicator_id": "rsi"
+    },
+    {
+      "params": {
+        "period": 14
+      },
+      "trigger": "overbought",
+      "version": "1",
+      "interval": "15m",
+      "signal_id": "rsi_overbought_5",
+      "signal_type": "single",
+      "indicator_id": "rsi"
+    },
+    {
+      "params": {
+        "period": 20,
+        "stddev": 2
+      },
+      "trigger": "price_cross_below_lower",
+      "version": "1",
+      "interval": "15m",
+      "signal_id": "bb_lower_5",
+      "signal_type": "single",
+      "indicator_id": "bb"
+    },
+    {
+      "params": {
+        "period": 20,
+        "stddev": 2
+      },
+      "trigger": "price_cross_above_upper",
+      "version": "1",
+      "interval": "15m",
+      "signal_id": "bb_upper_5",
+      "signal_type": "single",
+      "indicator_id": "bb"
+    },
+    {
+      "params": {
+        "period": 20,
+        "stddev": 2
+      },
+      "trigger": "price_cross_above_middle",
+      "version": "1",
+      "interval": "15m",
+      "signal_id": "bb_mid_up_5",
+      "signal_type": "single",
+      "indicator_id": "bb"
+    },
+    {
+      "params": {
+        "period": 20,
+        "stddev": 2
+      },
+      "trigger": "price_cross_below_middle",
+      "version": "1",
+      "interval": "15m",
+      "signal_id": "bb_mid_down_5",
+      "signal_type": "single",
+      "indicator_id": "bb"
+    },
+    {
+      "window": {
+        "valid_for_bars": 3
+      },
+      "operator": "all",
+      "signal_id": "long_entry_signal",
+      "conditions": [
+        {
+          "ref": "rsi_oversold_5",
+          "value": null,
+          "window": null,
+          "operator": null,
+          "ref_type": "user_signal"
+        },
+        {
+          "ref": "bb_lower_5",
+          "value": null,
+          "window": null,
+          "operator": null,
+          "ref_type": "user_signal"
+        }
+      ],
+      "signal_type": "composite"
+    },
+    {
+      "window": {
+        "valid_for_bars": 3
+      },
+      "operator": "all",
+      "signal_id": "short_entry_signal",
+      "conditions": [
+        {
+          "ref": "rsi_overbought_5",
+          "value": null,
+          "window": null,
+          "operator": null,
+          "ref_type": "user_signal"
+        },
+        {
+          "ref": "bb_upper_5",
+          "value": null,
+          "window": null,
+          "operator": null,
+          "ref_type": "user_signal"
+        }
+      ],
+      "signal_type": "composite"
+    },
+    {
+      "window": {
+        "valid_for_bars": 3
+      },
+      "operator": "any",
+      "signal_id": "long_exit_signal",
+      "conditions": [
+        {
+          "ref": "bb_mid_up_5",
+          "value": null,
+          "window": null,
+          "operator": null,
+          "ref_type": "user_signal"
+        },
+        {
+          "ref": "rsi_overbought_5",
+          "value": null,
+          "window": null,
+          "operator": null,
+          "ref_type": "user_signal"
+        }
+      ],
+      "signal_type": "composite"
+    },
+    {
+      "window": {
+        "valid_for_bars": 3
+      },
+      "operator": "any",
+      "signal_id": "short_exit_signal",
+      "conditions": [
+        {
+          "ref": "bb_mid_down_5",
+          "value": null,
+          "window": null,
+          "operator": null,
+          "ref_type": "user_signal"
+        },
+        {
+          "ref": "rsi_oversold_5",
+          "value": null,
+          "window": null,
+          "operator": null,
+          "ref_type": "user_signal"
+        }
+      ],
+      "signal_type": "composite"
+    },
+    {
+      "signal_id": "loss_exit_age",
+      "expression": "position.minutes_since_entry",
+      "signal_type": "expression",
+      "expression_value": "120",
+      "expression_operator": "gte"
+    },
+    {
+      "ref": "position_context.loss_pct_on_margin",
+      "value": "30",
+      "ref_type": "position_context",
+      "signal_id": "loss_exit_loss_pct",
+      "signal_type": "single",
+      "condition_operator": "gte"
+    },
+    {
+      "window": {
+        "valid_for_bars": 3
+      },
+      "operator": "all",
+      "signal_id": "loss_exit_signal",
+      "conditions": [
+        {
+          "ref": "loss_exit_age",
+          "value": null,
+          "window": null,
+          "operator": null,
+          "ref_type": "user_signal"
+        },
+        {
+          "ref": "loss_exit_loss_pct",
+          "value": null,
+          "window": null,
+          "operator": null,
+          "ref_type": "user_signal"
+        }
+      ],
+      "signal_type": "composite"
+    },
+    {
+      "params": {
+        "period": 20,
+        "stddev": 2
+      },
+      "trigger": "touch_middle",
+      "version": "1",
+      "interval": "15m",
+      "signal_id": "bb_touch_middle_5",
+      "signal_type": "single",
+      "indicator_id": "bb"
+    },
+    {
+      "signal_id": "pre_mid_fail_age",
+      "expression": "position.minutes_since_entry",
+      "signal_type": "expression",
+      "expression_value": "75",
+      "expression_operator": "gte"
+    },
+    {
+      "signal_id": "mid_touched_since_entry",
+      "expression": "bb_touch_middle_5.true_since_entry",
+      "signal_type": "expression",
+      "expression_value": "1",
+      "expression_operator": "gte"
+    },
+    {
+      "signal_id": "mid_not_touched_since_entry",
+      "expression": "bb_touch_middle_5.true_since_entry",
+      "signal_type": "expression",
+      "expression_value": "0",
+      "expression_operator": "eq"
+    },
+    {
+      "signal_id": "post_mid_runner_age",
+      "expression": "position.minutes_since_entry",
+      "signal_type": "expression",
+      "expression_value": "240",
+      "expression_operator": "gte"
+    },
+    {
+      "ref": "position_context.loss_pct_on_margin",
+      "value": "22",
+      "ref_type": "position_context",
+      "signal_id": "pre_mid_fail_loss",
+      "signal_type": "single",
+      "condition_operator": "gte"
+    },
+    {
+      "operator": "all",
+      "signal_id": "pre_mid_fail_exit_signal",
+      "conditions": [
+        {
+          "ref": "pre_mid_fail_age",
+          "value": null,
+          "window": null,
+          "operator": null,
+          "ref_type": "user_signal"
+        },
+        {
+          "ref": "pre_mid_fail_loss",
+          "value": null,
+          "window": null,
+          "operator": null,
+          "ref_type": "user_signal"
+        },
+        {
+          "ref": "mid_not_touched_since_entry",
+          "value": null,
+          "window": null,
+          "operator": null,
+          "ref_type": "user_signal"
+        }
+      ],
+      "signal_type": "composite"
+    },
+    {
+      "operator": "all",
+      "signal_id": "post_mid_timeout_exit_signal",
+      "conditions": [
+        {
+          "ref": "post_mid_runner_age",
+          "value": null,
+          "window": null,
+          "operator": null,
+          "ref_type": "user_signal"
+        },
+        {
+          "ref": "mid_touched_since_entry",
+          "value": null,
+          "window": null,
+          "operator": null,
+          "ref_type": "user_signal"
+        }
+      ],
+      "signal_type": "composite"
+    }
+  ],
+  "switch_rules": [
+    {
+      "switch_rule_id": "sw_flat_long",
+      "enabled": true,
+      "from_side": "flat",
+      "to_side": "long",
+      "trigger_signal": "long_entry_signal",
+      "close_quantity": "full_position",
+      "next_entry_sequence": 1,
+      "open_policy": "wait_entry_signal",
+      "priority": 100
+    },
+    {
+      "switch_rule_id": "sw_flat_short",
+      "enabled": true,
+      "from_side": "flat",
+      "to_side": "short",
+      "trigger_signal": "short_entry_signal",
+      "close_quantity": "full_position",
+      "next_entry_sequence": 1,
+      "open_policy": "wait_entry_signal",
+      "priority": 100
+    },
+    {
+      "name": "LONG TO SHORT",
+      "enabled": true,
+      "to_side": "short",
+      "priority": 100,
+      "from_side": "long",
+      "open_policy": "wait_entry_signal",
+      "close_quantity": "full_position",
+      "switch_rule_id": "switch_1",
+      "trigger_signal": "short_entry_signal",
+      "next_entry_sequence": 1
+    },
+    {
+      "name": "SHORT TO LONG",
+      "enabled": true,
+      "to_side": "long",
+      "priority": 100,
+      "from_side": "short",
+      "open_policy": "wait_entry_signal",
+      "close_quantity": "full_position",
+      "switch_rule_id": "switch_2",
+      "trigger_signal": "long_entry_signal",
+      "next_entry_sequence": 1
+    }
+  ],
+  "position_mode": "switch",
+  "strategy_risk_rules": [
+    {
+      "risk_rule_id": "half_short_on_trend_up",
+      "rule_type": "set_margin_coefficient",
+      "enabled": true,
+      "priority": 100,
+      "trigger_signal": "sig_trend_up",
+      "margin_coefficient": "0.5",
+      "side": "short"
+    },
+    {
+      "risk_rule_id": "half_long_on_trend_down",
+      "rule_type": "set_margin_coefficient",
+      "enabled": true,
+      "priority": 100,
+      "trigger_signal": "sig_trend_down",
+      "margin_coefficient": "0.5",
+      "side": "long"
+    },
+    {
+      "name": "COOLDOWN AFTER EXIT",
+      "value": 6,
+      "action": "reject",
+      "enabled": true,
+      "priority": 100,
+      "rule_type": "cooldown_bars",
+      "applies_to": "entry_and_switch",
+      "after_event": "any_exit_fill",
+      "risk_rule_id": "cooldown_1"
+    }
+  ]
+}

@@ -1,0 +1,200 @@
+{
+  "name": "trend_ema_v2",
+  "position_mode": "switch",
+  "basic": {
+    "exchange": "binance_um_futures",
+    "symbol": "BTCUSDT",
+    "initial_capital": "1000",
+    "leverage": "10",
+    "compound_profit": false
+  },
+  "signals": [
+    {
+      "signal_id": "ema_golden",
+      "signal_type": "single",
+      "indicator_id": "ema_cross",
+      "version": "1",
+      "interval": "15m",
+      "params": {"fast": 10, "slow": 30},
+      "trigger": "golden_cross"
+    },
+    {
+      "signal_id": "ema_death",
+      "signal_type": "single",
+      "indicator_id": "ema_cross",
+      "version": "1",
+      "interval": "15m",
+      "params": {"fast": 10, "slow": 30},
+      "trigger": "death_cross"
+    },
+    {
+      "signal_id": "rsi_ob",
+      "signal_type": "single",
+      "indicator_id": "rsi",
+      "version": "1",
+      "interval": "15m",
+      "params": {"period": 14},
+      "trigger": "overbought"
+    },
+    {
+      "signal_id": "rsi_os",
+      "signal_type": "single",
+      "indicator_id": "rsi",
+      "version": "1",
+      "interval": "15m",
+      "params": {"period": 14},
+      "trigger": "oversold"
+    },
+    {
+      "signal_id": "loss_pct",
+      "ref": "position_context.loss_pct_on_margin",
+      "value": "25",
+      "ref_type": "position_context",
+      "signal_type": "single",
+      "condition_operator": "gte"
+    },
+    {
+      "signal_id": "profit_pct",
+      "ref": "position_context.profit_pct_on_margin",
+      "value": "50",
+      "ref_type": "position_context",
+      "signal_type": "single",
+      "condition_operator": "gte"
+    }
+  ],
+  "long": {
+    "entry_rules": [
+      {
+        "entry_rule_id": "e_long",
+        "enabled": true,
+        "sequence": 1,
+        "trigger_signal": "ema_golden",
+        "position_pct": "100",
+        "priority": 100
+      }
+    ],
+    "exit_rules": [
+      {
+        "exit_rule_id": "x_long_sl",
+        "enabled": true,
+        "priority": 50,
+        "quantity": "full_position",
+        "exit_action": "stop_loss",
+        "trigger_signal": "loss_pct"
+      },
+      {
+        "exit_rule_id": "x_long_tp_rsi",
+        "enabled": true,
+        "priority": 80,
+        "quantity": "full_position",
+        "exit_action": "take_profit",
+        "trigger_signal": "rsi_ob"
+      },
+      {
+        "exit_rule_id": "x_long_tp_cross",
+        "enabled": true,
+        "priority": 90,
+        "quantity": "full_position",
+        "exit_action": "close",
+        "trigger_signal": "ema_death"
+      }
+    ]
+  },
+  "short": {
+    "entry_rules": [
+      {
+        "entry_rule_id": "e_short",
+        "enabled": true,
+        "sequence": 1,
+        "trigger_signal": "ema_death",
+        "position_pct": "100",
+        "priority": 100
+      }
+    ],
+    "exit_rules": [
+      {
+        "exit_rule_id": "x_short_sl",
+        "enabled": true,
+        "priority": 50,
+        "quantity": "full_position",
+        "exit_action": "stop_loss",
+        "trigger_signal": "loss_pct"
+      },
+      {
+        "exit_rule_id": "x_short_tp_rsi",
+        "enabled": true,
+        "priority": 80,
+        "quantity": "full_position",
+        "exit_action": "take_profit",
+        "trigger_signal": "rsi_os"
+      },
+      {
+        "exit_rule_id": "x_short_tp_cross",
+        "enabled": true,
+        "priority": 90,
+        "quantity": "full_position",
+        "exit_action": "close",
+        "trigger_signal": "ema_golden"
+      }
+    ]
+  },
+  "switch_rules": [
+    {
+      "switch_rule_id": "flat_long",
+      "enabled": true,
+      "from_side": "flat",
+      "to_side": "long",
+      "trigger_signal": "ema_golden",
+      "close_quantity": "full_position",
+      "next_entry_sequence": 1,
+      "open_policy": "wait_entry_signal",
+      "priority": 100
+    },
+    {
+      "switch_rule_id": "flat_short",
+      "enabled": true,
+      "from_side": "flat",
+      "to_side": "short",
+      "trigger_signal": "ema_death",
+      "close_quantity": "full_position",
+      "next_entry_sequence": 1,
+      "open_policy": "wait_entry_signal",
+      "priority": 100
+    },
+    {
+      "switch_rule_id": "long_short",
+      "enabled": true,
+      "from_side": "long",
+      "to_side": "short",
+      "trigger_signal": "ema_death",
+      "close_quantity": "full_position",
+      "next_entry_sequence": 1,
+      "open_policy": "wait_entry_signal",
+      "priority": 100
+    },
+    {
+      "switch_rule_id": "short_long",
+      "enabled": true,
+      "from_side": "short",
+      "to_side": "long",
+      "trigger_signal": "ema_golden",
+      "close_quantity": "full_position",
+      "next_entry_sequence": 1,
+      "open_policy": "wait_entry_signal",
+      "priority": 100
+    }
+  ],
+  "strategy_risk_rules": [
+    {
+      "name": "COOLDOWN AFTER EXIT",
+      "value": 6,
+      "action": "reject",
+      "enabled": true,
+      "priority": 100,
+      "rule_type": "cooldown_bars",
+      "applies_to": "entry_and_switch",
+      "after_event": "any_exit_fill",
+      "risk_rule_id": "cooldown_1"
+    }
+  ]
+}

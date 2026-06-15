@@ -1,0 +1,14 @@
+.DS_Store
+.env
+.qoder/
+__pycache__/
+*.py[cod]
+*.swp
+scripts/_tmp_*.py
+
+# Generated reports, diagnostics, and local market-data scratch files.
+data/*
+!data/.gitkeep
+!data/backtest_reports/
+data/backtest_reports/*
+!data/backtest_reports/.gitkeep

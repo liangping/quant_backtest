@@ -1,0 +1,90 @@
+{
+  "name": "bb_rsi_mean_reversion",
+  "position_mode": "long_only",
+  "side": "long",
+  "basic": {
+    "exchange": "binance_um_futures",
+    "symbol": "BTCUSDT",
+    "initial_capital": "1000",
+    "leverage": "5",
+    "compound_profit": false
+  },
+  "signals": [
+    {
+      "signal_id": "sig_bb_lower",
+      "signal_type": "single",
+      "indicator_id": "bb",
+      "version": "1",
+      "interval": "5m",
+      "params": { "period": 20, "stddev": 2 },
+      "trigger": "price_below_lower"
+    },
+    {
+      "signal_id": "sig_bb_middle",
+      "signal_type": "single",
+      "indicator_id": "bb",
+      "version": "1",
+      "interval": "5m",
+      "params": { "period": 20, "stddev": 2 },
+      "trigger": "touch_middle"
+    },
+    {
+      "signal_id": "sig_rsi_oversold",
+      "signal_type": "single",
+      "indicator_id": "rsi",
+      "version": "1",
+      "interval": "5m",
+      "params": { "period": 14 },
+      "trigger": "oversold"
+    },
+    {
+      "signal_id": "sig_rsi_overbought",
+      "signal_type": "single",
+      "indicator_id": "rsi",
+      "version": "1",
+      "interval": "5m",
+      "params": { "period": 14 },
+      "trigger": "overbought"
+    },
+    {
+      "signal_id": "sig_entry",
+      "signal_type": "composite",
+      "operator": "all",
+      "conditions": [
+        { "ref": "sig_bb_lower", "ref_type": "user_signal" },
+        { "ref": "sig_rsi_oversold", "ref_type": "user_signal" }
+      ]
+    }
+  ],
+  "long": {
+    "entry_rules": [
+      {
+        "entry_rule_id": "entry_mr",
+        "enabled": true,
+        "sequence": 1,
+        "trigger_signal": "sig_entry",
+        "position_pct": "100",
+        "priority": 100
+      }
+    ],
+    "exit_rules": [
+      {
+        "exit_rule_id": "exit_bb_tp",
+        "enabled": true,
+        "trigger_signal": "sig_bb_middle",
+        "exit_action": "take_profit",
+        "quantity": "full_position",
+        "priority": 30
+      },
+      {
+        "exit_rule_id": "exit_rsi_tp",
+        "enabled": true,
+        "trigger_signal": "sig_rsi_overbought",
+        "exit_action": "take_profit",
+        "quantity": "full_position",
+        "priority": 20
+      }
+    ]
+  },
+  "strategy_risk_rules": []
+}

@@ -1,0 +1,188 @@
+{
+  "long": {
+    "exit_rules": [
+      {
+        "enabled": true,
+        "priority": 60,
+        "quantity": "full_position",
+        "percentage": null,
+        "exit_action": "stop_loss",
+        "exit_rule_id": "long_1atr_stop",
+        "trigger_signal": "long_1atr_stop"
+      },
+      {
+        "enabled": true,
+        "priority": 90,
+        "quantity": "full_position",
+        "percentage": null,
+        "exit_action": "take_profit",
+        "exit_rule_id": "long_macd_exit",
+        "trigger_signal": "long_take_profit_signal"
+      }
+    ],
+    "entry_rules": [
+      {
+        "enabled": true,
+        "priority": 100,
+        "sequence": 1,
+        "entry_rule_id": "long_macd_entry",
+        "trigger_signal": "filtered_long_entry_signal",
+        "position_pct": "100"
+      }
+    ]
+  },
+  "name": "macd_atr_trend",
+  "basic": {
+    "symbol": "BTCUSDT",
+    "end_time": "2026-06-06T21:54:17.242000Z",
+    "exchange": "binance_um_futures",
+    "leverage": "10",
+    "start_time": "2026-05-07T21:54:17.242000Z",
+    "compound_profit": false,
+    "initial_capital": "1000"
+  },
+  "short": {
+    "exit_rules": [],
+    "entry_rules": []
+  },
+  "signals": [
+    {
+      "params": {
+        "fast": 12,
+        "slow": 26,
+        "signal": 9
+      },
+      "trigger": "golden_cross",
+      "version": "1",
+      "interval": "15m",
+      "operator": "all",
+      "signal_id": "macd_long_entry",
+      "signal_type": "single",
+      "indicator_id": "macd"
+    },
+    {
+      "params": {
+        "fast": 12,
+        "slow": 26,
+        "signal": 9
+      },
+      "trigger": "death_cross",
+      "version": "1",
+      "interval": "15m",
+      "operator": "all",
+      "signal_id": "macd_death_cross",
+      "signal_type": "single",
+      "indicator_id": "macd"
+    },
+    {
+      "params": {
+        "fast": 12,
+        "slow": 26,
+        "signal": 9
+      },
+      "trigger": "above_zero_golden_cross",
+      "version": "1",
+      "interval": "15m",
+      "operator": "all",
+      "signal_id": "macd_above_zero_golden_cross",
+      "signal_type": "single",
+      "indicator_id": "macd"
+    },
+    {
+      "params": {
+        "length": 14
+      },
+      "version": "1",
+      "interval": "15m",
+      "operator": "all",
+      "signal_id": "atr14",
+      "signal_type": "single",
+      "indicator_id": "atr",
+      "condition_operator": "none"
+    },
+    {
+      "params": {
+        "fast": 20,
+        "slow": 60
+      },
+      "version": "1",
+      "interval": "15m",
+      "operator": "all",
+      "signal_id": "trend_ema_cross",
+      "signal_type": "single",
+      "indicator_id": "ema_cross",
+      "condition_operator": "none"
+    },
+    {
+      "params": {},
+      "version": "1",
+      "operator": "all",
+      "signal_id": "not_strong_short",
+      "expression": "trend_ema_cross.spread / atr14",
+      "signal_type": "expression",
+      "expression_value": "-0.5",
+      "expression_operator": "gt"
+    },
+    {
+      "params": {},
+      "version": "1",
+      "operator": "all",
+      "signal_id": "filtered_long_entry_signal",
+      "conditions": [
+        {
+          "ref": "macd_long_entry",
+          "value": null,
+          "window": null,
+          "operator": null,
+          "ref_type": "user_signal"
+        },
+        {
+          "ref": "not_strong_short",
+          "value": null,
+          "window": null,
+          "operator": null,
+          "ref_type": "user_signal"
+        }
+      ],
+      "signal_type": "composite"
+    },
+    {
+      "params": {},
+      "version": "1",
+      "operator": "all",
+      "signal_id": "long_1atr_stop",
+      "atr_signal": "atr14",
+      "signal_type": "position_indicator",
+      "atr_operator": "price_lte",
+      "atr_reference": "average_entry_price",
+      "atr_multiplier": "1",
+      "position_metric": "atr"
+    },
+    {
+      "params": {},
+      "version": "1",
+      "operator": "any",
+      "signal_id": "long_take_profit_signal",
+      "conditions": [
+        {
+          "ref": "macd_death_cross",
+          "value": null,
+          "window": null,
+          "operator": null,
+          "ref_type": "user_signal"
+        },
+        {
+          "ref": "macd_above_zero_golden_cross",
+          "value": null,
+          "window": null,
+          "operator": null,
+          "ref_type": "user_signal"
+        }
+      ],
+      "signal_type": "composite"
+    }
+  ],
+  "switch_rules": [],
+  "position_mode": "long_only",
+  "strategy_risk_rules": []
+}
