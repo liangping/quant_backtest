@@ -1,0 +1,325 @@
+{
+  "name": "strong_downtrend_short",
+  "position_mode": "short_only",
+  "basic": {
+    "exchange": "binance_um_futures",
+    "symbol": "BTCUSDT",
+    "initial_capital": "1000",
+    "leverage": "10",
+    "compound_profit": false
+  },
+  "signals": [
+    {
+      "signal_id": "ema_short_stack",
+      "signal_type": "single",
+      "indicator_id": "ema_cross",
+      "version": "1",
+      "interval": "15m",
+      "params": {
+        "fast": 20,
+        "slow": 60
+      },
+      "trigger": "fast_below_slow"
+    },
+    {
+      "signal_id": "ema_short_cross",
+      "signal_type": "single",
+      "indicator_id": "ema_cross",
+      "version": "1",
+      "interval": "15m",
+      "params": {
+        "fast": 20,
+        "slow": 60
+      },
+      "trigger": "death_cross"
+    },
+    {
+      "signal_id": "ema_bull_cross",
+      "signal_type": "single",
+      "indicator_id": "ema_cross",
+      "version": "1",
+      "interval": "15m",
+      "params": {
+        "fast": 20,
+        "slow": 60
+      },
+      "trigger": "golden_cross"
+    },
+    {
+      "signal_id": "adx_strong",
+      "signal_type": "single",
+      "indicator_id": "adx",
+      "version": "1",
+      "interval": "15m",
+      "params": {
+        "period": 14
+      },
+      "condition_operator": "gte",
+      "value": "30"
+    },
+    {
+      "signal_id": "adx_weak",
+      "signal_type": "single",
+      "indicator_id": "adx",
+      "version": "1",
+      "interval": "15m",
+      "params": {
+        "period": 14
+      },
+      "condition_operator": "lt",
+      "value": "20"
+    },
+    {
+      "signal_id": "di_bearish",
+      "signal_type": "single",
+      "indicator_id": "adx",
+      "version": "1",
+      "interval": "15m",
+      "params": {
+        "period": 14
+      },
+      "trigger": "minus_di_above_plus_di"
+    },
+    {
+      "signal_id": "roc_negative",
+      "signal_type": "single",
+      "indicator_id": "roc",
+      "version": "1",
+      "interval": "15m",
+      "params": {
+        "period": 12
+      },
+      "condition_operator": "lt",
+      "value": "-0.8"
+    },
+    {
+      "signal_id": "bb_lower_break",
+      "signal_type": "single",
+      "indicator_id": "bb",
+      "version": "1",
+      "interval": "15m",
+      "params": {
+        "period": 20,
+        "stddev": 2
+      },
+      "trigger": "price_cross_below_lower"
+    },
+    {
+      "signal_id": "bb_mid_reclaim",
+      "signal_type": "single",
+      "indicator_id": "bb",
+      "version": "1",
+      "interval": "15m",
+      "params": {
+        "period": 20,
+        "stddev": 2
+      },
+      "trigger": "price_cross_above_middle"
+    },
+    {
+      "signal_id": "atr14",
+      "signal_type": "single",
+      "indicator_id": "atr",
+      "version": "1",
+      "interval": "15m",
+      "params": {
+        "period": 14
+      },
+      "condition_operator": "none"
+    },
+    {
+      "signal_id": "short_entry_filter",
+      "signal_type": "composite",
+      "operator": "all",
+      "window": {
+        "valid_for_bars": 3
+      },
+      "conditions": [
+        {
+          "ref": "bb_lower_break",
+          "ref_type": "user_signal"
+        },
+        {
+          "ref": "ema_short_stack",
+          "ref_type": "user_signal"
+        },
+        {
+          "ref": "adx_strong",
+          "ref_type": "user_signal"
+        },
+        {
+          "ref": "di_bearish",
+          "ref_type": "user_signal"
+        },
+        {
+          "ref": "roc_negative",
+          "ref_type": "user_signal"
+        }
+      ]
+    },
+    {
+      "signal_id": "short_breakdown_entry",
+      "signal_type": "composite",
+      "operator": "all",
+      "window": {
+        "valid_for_bars": 3
+      },
+      "conditions": [
+        {
+          "ref": "ema_short_cross",
+          "ref_type": "user_signal"
+        },
+        {
+          "ref": "adx_strong",
+          "ref_type": "user_signal"
+        },
+        {
+          "ref": "di_bearish",
+          "ref_type": "user_signal"
+        },
+        {
+          "ref": "roc_negative",
+          "ref_type": "user_signal"
+        }
+      ]
+    },
+    {
+      "signal_id": "short_entry",
+      "signal_type": "composite",
+      "operator": "any",
+      "conditions": [
+        {
+          "ref": "short_entry_filter",
+          "ref_type": "user_signal"
+        },
+        {
+          "ref": "short_breakdown_entry",
+          "ref_type": "user_signal"
+        }
+      ]
+    },
+    {
+      "signal_id": "short_hard_stop",
+      "signal_type": "position_indicator",
+      "atr_signal": "atr14",
+      "atr_operator": "price_gte",
+      "atr_reference": "average_entry_price",
+      "atr_multiplier": "0.8",
+      "position_metric": "atr"
+    },
+    {
+      "signal_id": "short_take_profit",
+      "signal_type": "position_indicator",
+      "atr_signal": "atr14",
+      "atr_operator": "price_lte",
+      "atr_reference": "average_entry_price",
+      "atr_multiplier": "2.0",
+      "position_metric": "atr"
+    },
+    {
+      "signal_id": "short_trailing_stop",
+      "signal_type": "position_indicator",
+      "atr_signal": "atr14",
+      "atr_operator": "price_gte",
+      "atr_reference": "lowest_since_entry",
+      "atr_multiplier": "1.6",
+      "position_metric": "atr"
+    },
+    {
+      "signal_id": "short_trend_exit",
+      "signal_type": "composite",
+      "operator": "any",
+      "conditions": [
+        {
+          "ref": "ema_bull_cross",
+          "ref_type": "user_signal"
+        },
+        {
+          "ref": "bb_mid_reclaim",
+          "ref_type": "user_signal"
+        },
+        {
+          "ref": "adx_weak",
+          "ref_type": "user_signal"
+        }
+      ]
+    }
+  ],
+  "long": {
+    "entry_rules": [],
+    "exit_rules": []
+  },
+  "short": {
+    "entry_rules": [
+      {
+        "entry_rule_id": "e_short_downtrend",
+        "enabled": true,
+        "sequence": 1,
+        "trigger_signal": "short_entry",
+        "position_pct": "60",
+        "priority": 100
+      }
+    ],
+    "exit_rules": [
+      {
+        "exit_rule_id": "x_short_hard_stop",
+        "enabled": true,
+        "priority": 40,
+        "quantity": "full_position",
+        "exit_action": "stop_loss",
+        "trigger_signal": "short_hard_stop"
+      },
+      {
+        "exit_rule_id": "x_short_take_profit",
+        "enabled": true,
+        "priority": 70,
+        "quantity": "percentage",
+        "percentage": "60",
+        "exit_action": "take_profit",
+        "trigger_signal": "short_take_profit"
+      },
+      {
+        "exit_rule_id": "x_short_trailing_stop",
+        "enabled": true,
+        "priority": 80,
+        "quantity": "full_position",
+        "exit_action": "stop_loss",
+        "trigger_signal": "short_trailing_stop"
+      },
+      {
+        "exit_rule_id": "x_short_trend_exit",
+        "enabled": true,
+        "priority": 90,
+        "quantity": "full_position",
+        "exit_action": "close",
+        "trigger_signal": "short_trend_exit"
+      }
+    ]
+  },
+  "switch_rules": [],
+  "strategy_risk_rules": [
+    {
+      "risk_rule_id": "max_loss",
+      "enabled": true,
+      "rule_type": "max_loss_percent",
+      "threshold_pct": 6,
+      "priority": 0
+    },
+    {
+      "risk_rule_id": "max_exposure",
+      "enabled": true,
+      "rule_type": "max_exposure_percent",
+      "threshold_pct": 180,
+      "priority": 1
+    },
+    {
+      "risk_rule_id": "cooldown_after_exit",
+      "enabled": true,
+      "rule_type": "cooldown_bars",
+      "value": 4,
+      "after_event": "any_exit_fill",
+      "applies_to": "entry",
+      "priority": 100
+    }
+  ]
+}

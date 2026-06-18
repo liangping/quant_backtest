@@ -5,6 +5,7 @@ from __future__ import annotations
 
 import argparse
 import json
+from decimal import Decimal, InvalidOperation
 import subprocess
 import sys
 from pathlib import Path
@@ -157,10 +158,26 @@ def validate(path: Path, catalog: dict) -> list[str]:
 
     for side in ("long", "short"):
         block = strategy.get(side, {})
+        total_position_pct = Decimal("0")
         for rule in block.get("entry_rules", []):
             ref = rule.get("trigger_signal")
             if ref not in signal_ids:
                 errors.append(f"{side}.entry_rules references unknown trigger_signal: {ref}")
+            try:
+                position_pct = Decimal(str(rule.get("position_pct", "0")))
+            except (InvalidOperation, ValueError):
+                errors.append(f"{side}.entry_rules invalid position_pct: {rule.get('position_pct')}")
+                continue
+            if position_pct <= Decimal("0"):
+                errors.append(f"{side}.entry_rules position_pct must be greater than zero")
+            total_position_pct += position_pct
+        if block.get("entry_rules") and (
+            total_position_pct <= Decimal("1") or total_position_pct > Decimal("100")
+        ):
+            errors.append(
+                f"{side}.entry_rules position_pct total must be greater than 1 "
+                "and less than or equal to 100"
+            )
         for rule in block.get("exit_rules", []):
             ref = rule.get("trigger_signal")
             if ref not in signal_ids:
