@@ -106,17 +106,27 @@ def validate(path: Path, catalog: dict) -> list[str]:
 
         if signal_type == "single":
             indicator_id = signal.get("indicator_id")
-            if indicator_id not in indicators:
-                errors.append(f"{label} unknown indicator_id: {indicator_id}")
-                continue
-            trigger = signal.get("trigger")
-            triggers = {
-                item.get("trigger_id")
-                for item in indicators[indicator_id].get("triggers", [])
-                if isinstance(item, dict)
-            }
-            if trigger and trigger not in triggers:
-                errors.append(f"{label} invalid trigger for {indicator_id}: {trigger}")
+            if indicator_id is not None:
+                if indicator_id not in indicators:
+                    errors.append(f"{label} unknown indicator_id: {indicator_id}")
+                    continue
+                trigger = signal.get("trigger")
+                triggers = {
+                    item.get("trigger_id")
+                    for item in indicators[indicator_id].get("triggers", [])
+                    if isinstance(item, dict)
+                }
+                if trigger and trigger not in triggers:
+                    errors.append(f"{label} invalid trigger for {indicator_id}: {trigger}")
+            else:
+                ref = signal.get("ref")
+                ref_type = signal.get("ref_type")
+                if ref_type not in ref_types:
+                    errors.append(f"{label} unknown condition ref_type: {ref_type}")
+                if not ref:
+                    errors.append(f"{label} missing indicator_id or context ref")
+                if ref_type == "user_signal" and ref not in signal_ids:
+                    errors.append(f"{label} references unknown prior signal: {ref}")
         elif signal_type == "composite":
             op = signal.get("operator", "all")
             if op not in composite_operators:

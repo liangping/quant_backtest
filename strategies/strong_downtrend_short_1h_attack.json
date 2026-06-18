@@ -1,0 +1,344 @@
+{
+  "name": "strong_downtrend_short_1h_attack",
+  "position_mode": "short_only",
+  "basic": {
+    "exchange": "binance_um_futures",
+    "symbol": "BTCUSDT",
+    "initial_capital": "1000",
+    "leverage": "30",
+    "compound_profit": true
+  },
+  "signals": [
+    {
+      "signal_id": "ema_short_stack",
+      "signal_type": "single",
+      "indicator_id": "ema_cross",
+      "version": "1",
+      "interval": "1h",
+      "params": {
+        "fast": 20,
+        "slow": 60
+      },
+      "trigger": "fast_below_slow"
+    },
+    {
+      "signal_id": "ema_short_cross",
+      "signal_type": "single",
+      "indicator_id": "ema_cross",
+      "version": "1",
+      "interval": "1h",
+      "params": {
+        "fast": 20,
+        "slow": 60
+      },
+      "trigger": "death_cross"
+    },
+    {
+      "signal_id": "ema_bull_cross",
+      "signal_type": "single",
+      "indicator_id": "ema_cross",
+      "version": "1",
+      "interval": "1h",
+      "params": {
+        "fast": 20,
+        "slow": 60
+      },
+      "trigger": "golden_cross"
+    },
+    {
+      "signal_id": "adx_strong",
+      "signal_type": "single",
+      "indicator_id": "adx",
+      "version": "1",
+      "interval": "1h",
+      "params": {
+        "period": 14
+      },
+      "condition_operator": "gte",
+      "value": "32"
+    },
+    {
+      "signal_id": "di_bearish",
+      "signal_type": "single",
+      "indicator_id": "adx",
+      "version": "1",
+      "interval": "1h",
+      "params": {
+        "period": 14
+      },
+      "trigger": "minus_di_above_plus_di"
+    },
+    {
+      "signal_id": "roc_negative",
+      "signal_type": "single",
+      "indicator_id": "roc",
+      "version": "1",
+      "interval": "1h",
+      "params": {
+        "period": 12
+      },
+      "condition_operator": "lt",
+      "value": "-2.0"
+    },
+    {
+      "signal_id": "bb_lower_break",
+      "signal_type": "single",
+      "indicator_id": "bb",
+      "version": "1",
+      "interval": "1h",
+      "params": {
+        "period": 20,
+        "stddev": 2
+      },
+      "trigger": "price_cross_below_lower"
+    },
+    {
+      "signal_id": "bb_mid_reclaim",
+      "signal_type": "single",
+      "indicator_id": "bb",
+      "version": "1",
+      "interval": "1h",
+      "params": {
+        "period": 20,
+        "stddev": 2
+      },
+      "trigger": "price_cross_above_middle"
+    },
+    {
+      "signal_id": "bb_near_lower",
+      "signal_type": "single",
+      "indicator_id": "bb",
+      "version": "1",
+      "interval": "1h",
+      "params": {
+        "period": 20,
+        "stddev": 2
+      },
+      "trigger": "near_lower"
+    },
+    {
+      "signal_id": "ema20_price_below_1h",
+      "signal_type": "single",
+      "indicator_id": "ema",
+      "version": "1",
+      "interval": "1h",
+      "params": {
+        "period": 20
+      },
+      "trigger": "price_below"
+    },
+    {
+      "signal_id": "atr14",
+      "signal_type": "single",
+      "indicator_id": "atr",
+      "version": "1",
+      "interval": "1h",
+      "params": {
+        "period": 14
+      },
+      "condition_operator": "none"
+    },
+    {
+      "signal_id": "roc_negative_loose",
+      "signal_type": "single",
+      "indicator_id": "roc",
+      "version": "1",
+      "interval": "1h",
+      "params": {
+        "period": 12
+      },
+      "condition_operator": "lt",
+      "value": "-1.0"
+    },
+    {
+      "signal_id": "ema_short_stack_2h",
+      "signal_type": "single",
+      "indicator_id": "ema_cross",
+      "version": "1",
+      "interval": "2h",
+      "params": {
+        "fast": 20,
+        "slow": 60
+      },
+      "trigger": "fast_below_slow"
+    },
+    {
+      "signal_id": "ema_short_stack_4h",
+      "signal_type": "single",
+      "indicator_id": "ema_cross",
+      "version": "1",
+      "interval": "4h",
+      "params": {
+        "fast": 20,
+        "slow": 60
+      },
+      "trigger": "fast_below_slow"
+    },
+    {
+      "signal_id": "chop_trending_2h",
+      "signal_type": "single",
+      "indicator_id": "chop",
+      "version": "1",
+      "interval": "2h",
+      "params": {
+        "period": 14
+      },
+      "trigger": "trending"
+    },
+    {
+      "signal_id": "short_entry_filter",
+      "signal_type": "composite",
+      "operator": "all",
+      "window": {
+        "valid_for_bars": 3
+      },
+      "conditions": [
+        {
+          "ref": "bb_near_lower",
+          "ref_type": "user_signal"
+        },
+        {
+          "ref": "ema_short_stack",
+          "ref_type": "user_signal"
+        },
+        {
+          "ref": "adx_strong",
+          "ref_type": "user_signal"
+        },
+        {
+          "ref": "di_bearish",
+          "ref_type": "user_signal"
+        },
+        {
+          "ref": "roc_negative",
+          "ref_type": "user_signal"
+        },
+        {
+          "ref": "ema_short_stack_2h",
+          "ref_type": "user_signal"
+        },
+        {
+          "ref": "ema_short_stack_4h",
+          "ref_type": "user_signal"
+        }
+      ]
+    },
+    {
+      "signal_id": "short_hard_stop",
+      "signal_type": "position_indicator",
+      "atr_signal": "atr14",
+      "atr_operator": "price_gte",
+      "atr_reference": "average_entry_price",
+      "atr_multiplier": "1.0",
+      "position_metric": "atr"
+    },
+    {
+      "signal_id": "short_trailing_stop",
+      "signal_type": "position_indicator",
+      "atr_signal": "atr14",
+      "atr_operator": "price_gte",
+      "atr_reference": "lowest_since_entry",
+      "atr_multiplier": "3.2",
+      "position_metric": "atr"
+    },
+    {
+      "signal_id": "short_trend_exit",
+      "signal_type": "composite",
+      "operator": "any",
+      "conditions": [
+        {
+          "ref": "ema_bull_cross",
+          "ref_type": "user_signal"
+        },
+        {
+          "ref": "bb_mid_reclaim",
+          "ref_type": "user_signal"
+        }
+      ]
+    },
+    {
+      "signal_id": "margin_loss_stop_95",
+      "ref": "position_context.loss_pct_on_margin",
+      "value": "95",
+      "ref_type": "position_context",
+      "signal_type": "single",
+      "condition_operator": "gte"
+    }
+  ],
+  "long": {
+    "entry_rules": [],
+    "exit_rules": []
+  },
+  "short": {
+    "entry_rules": [
+      {
+        "entry_rule_id": "e_short_downtrend",
+        "enabled": true,
+        "sequence": 1,
+        "trigger_signal": "short_entry_filter",
+        "position_pct": "100",
+        "priority": 100
+      }
+    ],
+    "exit_rules": [
+      {
+        "exit_rule_id": "x_short_margin_loss_95",
+        "enabled": true,
+        "priority": 30,
+        "quantity": "full_position",
+        "exit_action": "stop_loss",
+        "trigger_signal": "margin_loss_stop_95"
+      },
+      {
+        "exit_rule_id": "x_short_hard_stop",
+        "enabled": true,
+        "priority": 40,
+        "quantity": "full_position",
+        "exit_action": "stop_loss",
+        "trigger_signal": "short_hard_stop"
+      },
+      {
+        "exit_rule_id": "x_short_trailing_stop",
+        "enabled": true,
+        "priority": 80,
+        "quantity": "full_position",
+        "exit_action": "stop_loss",
+        "trigger_signal": "short_trailing_stop"
+      },
+      {
+        "exit_rule_id": "x_short_trend_exit",
+        "enabled": true,
+        "priority": 90,
+        "quantity": "full_position",
+        "exit_action": "close",
+        "trigger_signal": "short_trend_exit"
+      }
+    ]
+  },
+  "switch_rules": [],
+  "strategy_risk_rules": [
+    {
+      "risk_rule_id": "max_loss",
+      "enabled": true,
+      "rule_type": "max_loss_percent",
+      "threshold_pct": 50,
+      "priority": 0
+    },
+    {
+      "risk_rule_id": "max_exposure",
+      "enabled": true,
+      "rule_type": "max_exposure_percent",
+      "threshold_pct": 30,
+      "priority": 1
+    },
+    {
+      "risk_rule_id": "cooldown_after_exit",
+      "enabled": true,
+      "rule_type": "cooldown_bars",
+      "value": 240,
+      "after_event": "any_exit_fill",
+      "applies_to": "entry",
+      "priority": 100
+    }
+  ]
+}
