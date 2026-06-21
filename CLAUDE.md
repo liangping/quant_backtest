@@ -65,7 +65,11 @@ strategies does not require the runner; executing backtests does.
 
 ## Environment Configuration
 
-For local development, see **[LOCAL_SETUP.md](LOCAL_SETUP.md)** for step-by-step
+**Cloud environment**: PostgreSQL 16 is available (`localhost:5432`). Use for
+strategy metadata, backtest archival, and analysis results. See
+**[POSTGRES_SETUP.md](POSTGRES_SETUP.md)**.
+
+**Local development**: See **[LOCAL_SETUP.md](LOCAL_SETUP.md)** for step-by-step
 ClickHouse installation (Docker Compose, Homebrew, or system packages).
 
 Copy `.env.example` to `.env` and adjust. Scripts load `.env` via
