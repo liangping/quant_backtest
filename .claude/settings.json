@@ -1,0 +1,29 @@
+{
+  "permissions": [
+    {
+      "type": "allow",
+      "category": "bash",
+      "description": "Allow all bash commands for development"
+    },
+    {
+      "type": "allow",
+      "category": "network",
+      "description": "Allow network requests to any domain"
+    },
+    {
+      "type": "allow",
+      "category": "package_manager",
+      "description": "Allow npm, pip, and other package managers"
+    },
+    {
+      "type": "allow",
+      "category": "file_operations",
+      "description": "Allow file read/write operations"
+    },
+    {
+      "type": "allow",
+      "category": "git",
+      "description": "Allow git operations"
+    }
+  ]
+}
