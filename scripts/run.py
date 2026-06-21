@@ -7,6 +7,11 @@ robot runtime. The legacy backtest-direct-runner path is intentionally unused.
 Usage:
   python3 scripts/run.py single --strategy bb_rsi_mean_reversion --start 2026-06-10 --end 2026-06-11
   python3 scripts/run.py monthly --strategy bb_rsi_mean_reversion --interval 5m
+
+PostgreSQL projection (--projection-sink):
+  The runner supports --projection-sink postgres:postgres://... for streaming
+  trade events into a PostgreSQL database. Set POSTGRES_URL in .env or pass
+  --projection-sink explicitly. Defaults to none (no projection).
 """
 
 from __future__ import annotations
@@ -84,6 +89,11 @@ def clickhouse_env() -> dict[str, str]:
     return env
 
 
+def default_postgres_url() -> str | None:
+    """Return postgres projection URL from env if configured."""
+    return os.environ.get("POSTGRES_URL") or os.environ.get("DATABASE_URL")
+
+
 def run_one(
     strategy_path: Path,
     symbol: str,
@@ -93,6 +103,8 @@ def run_one(
     chart_interval: str | None,
     chunk_size: int,
     monitor: bool,
+    projection_sink: str | None = None,
+    projection_mode: str = "minimal",
 ) -> dict:
     if not RUNNER.exists():
         return {"error": f"backtest-live-runner not found: {RUNNER}"}
@@ -125,6 +137,8 @@ def run_one(
         cmd.extend(["--chart-interval", chart_interval])
     if monitor:
         cmd.extend(["--monitor", "--monitor-every-bars", "1000"])
+    if projection_sink:
+        cmd.extend(["--projection-sink", projection_sink, "--projection-mode", projection_mode])
 
     proc = subprocess.run(cmd, capture_output=True, text=True, env=clickhouse_env())
     if proc.returncode != 0:
@@ -157,10 +171,13 @@ def print_report(report: dict, label: str = "") -> None:
 
 def cmd_single(args) -> None:
     strategy_path = resolve_strategy(args.strategy)
+    projection_sink = args.projection_sink or default_postgres_url()
     print(
         f"Strategy: {strategy_path.name}  {args.exchange}:{args.symbol}  "
         f"{args.start} -> {args.end}  chart={args.interval}"
     )
+    if projection_sink:
+        print(f"  projection-sink: {projection_sink}  mode={args.projection_mode}")
     report = run_one(
         strategy_path,
         args.symbol,
@@ -170,6 +187,8 @@ def cmd_single(args) -> None:
         args.interval,
         args.chunk_size,
         args.monitor,
+        projection_sink=projection_sink,
+        projection_mode=args.projection_mode,
     )
     if "error" in report:
         print(f"ERROR: {report['error']}", file=sys.stderr)
@@ -180,6 +199,7 @@ def cmd_single(args) -> None:
 
 def cmd_monthly(args) -> None:
     strategy_path = resolve_strategy(args.strategy)
+    projection_sink = args.projection_sink or default_postgres_url()
     months = [
         ("2025-12-01", "2026-01-01"),
         ("2026-01-01", "2026-02-01"),
@@ -190,6 +210,8 @@ def cmd_monthly(args) -> None:
     ]
 
     print(f"Strategy: {strategy_path.name}  {args.exchange}:{args.symbol}  monthly")
+    if projection_sink:
+        print(f"  projection-sink: {projection_sink}  mode={args.projection_mode}")
     total_pnl = 0.0
     for start, end in months:
         report = run_one(
@@ -201,6 +223,8 @@ def cmd_monthly(args) -> None:
             args.interval,
             args.chunk_size,
             args.monitor,
+            projection_sink=projection_sink,
+            projection_mode=args.projection_mode,
         )
         label = start[:7]
         if "error" in report:
@@ -222,6 +246,21 @@ def main() -> None:
         p.add_argument("--interval", default="5m", help="Chart/report sampling interval")
         p.add_argument("--chunk-size", type=int, default=10000)
         p.add_argument("--monitor", action="store_true")
+        p.add_argument(
+            "--projection-sink",
+            default=None,
+            help=(
+                "Projection sink for trade events. "
+                "Examples: postgres:postgres://localhost/quant_data  stdout  none. "
+                "Also read from POSTGRES_URL env var."
+            ),
+        )
+        p.add_argument(
+            "--projection-mode",
+            default="minimal",
+            choices=["minimal", "full"],
+            help="Projection detail level: minimal (fills/positions) or full (all events)",
+        )
 
     single = sub.add_parser("single", help="Single live replay backtest")
     add_common(single)
