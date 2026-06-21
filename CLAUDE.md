@@ -40,10 +40,17 @@ catalog → sync the needed market data → run a backtest → read the report.*
 
 ## Platform Caveat — Read First
 
-The bundled `bin/backtest-live-runner` is a **macOS arm64 (Mach-O) binary**. This
-repository may be checked out on Linux (including the cloud execution
-environment), where that binary **cannot run**. Before assuming a backtest can
-execute here:
+This repository runs on **Linux x86-64** (currently deployed in cloud). The
+`bin/backtest-live-runner` is an ELF x86-64 Linux binary. However, **backtests
+still require ClickHouse**:
+
+- **Local development**: See [LOCAL_SETUP.md](LOCAL_SETUP.md) to install
+  ClickHouse via Docker Compose, Homebrew, or system packages.
+- **This cloud environment**: Network restrictions prevent Docker pulls and
+  ClickHouse installation. Work locally and push strategy updates from this
+  branch.
+
+Before assuming a backtest can execute:
 
 - Check the binary's platform (`file bin/backtest-live-runner`).
 - On a non-macOS host, the runner must be replaced with a compatible build or
@@ -57,6 +64,9 @@ strategy result. Editing, validating (statically), and reasoning about
 strategies does not require the runner; executing backtests does.
 
 ## Environment Configuration
+
+For local development, see **[LOCAL_SETUP.md](LOCAL_SETUP.md)** for step-by-step
+ClickHouse installation (Docker Compose, Homebrew, or system packages).
 
 Copy `.env.example` to `.env` and adjust. Scripts load `.env` via
 `run.load_dotenv()` (only sets keys not already in the environment). Keys:
