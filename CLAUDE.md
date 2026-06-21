@@ -41,33 +41,47 @@ catalog → sync the needed market data → run a backtest → read the report.*
 ## Platform Caveat — Read First
 
 This repository runs on **Linux x86-64** (currently deployed in cloud). The
-`bin/backtest-live-runner` is an ELF x86-64 Linux binary. However, **backtests
-still require ClickHouse**:
+`bin/backtest-live-runner` is an ELF x86-64 Linux binary (updated from the
+original macOS arm64).
 
+**Backtests require ClickHouse 24.3+** (for `DateTime64` support):
+
+- **Cloud environment**: ClickHouse 24.3.3.102 is installed at
+  `/usr/bin/clickhouse-server`. Start it with:
+  ```bash
+  bash scripts/start_clickhouse.sh
+  ```
+  It does **not** auto-start — run this script at the beginning of each session.
+  The `market` database and `klines_1m` table are pre-created with the correct
+  schema.
 - **Local development**: See [LOCAL_SETUP.md](LOCAL_SETUP.md) to install
   ClickHouse via Docker Compose, Homebrew, or system packages.
-- **This cloud environment**: Network restrictions prevent Docker pulls and
-  ClickHouse installation. Work locally and push strategy updates from this
-  branch.
+
+**Market data situation in cloud**: `data.becole.com` and all exchange APIs are
+blocked by egress policy. To get real market data, add `data.becole.com` to
+your environment's egress allowlist at https://code.claude.com/docs/en/claude-code-on-the-web.
+Until then, use `scripts/gen_synthetic_klines.py` to generate GBM-based
+synthetic data (sufficient for pipeline testing; results are not meaningful for
+real strategy evaluation).
 
 Before assuming a backtest can execute:
 
 - Check the binary's platform (`file bin/backtest-live-runner`).
-- On a non-macOS host, the runner must be replaced with a compatible build or
-  pointed elsewhere via `BACKTEST_LIVE_RUNNER=/path/to/runner` in `.env`.
-- A runnable backtest also requires a **local ClickHouse** populated with the
-  target symbol/window. None of that is provisioned by default.
+- A runnable backtest requires a running ClickHouse populated with the target
+  symbol/window — run `start_clickhouse.sh` first, then sync or generate data.
 
-If you are asked to "run" a strategy in an environment that lacks a compatible
-runner or ClickHouse, say so explicitly rather than reporting a failed run as a
-strategy result. Editing, validating (statically), and reasoning about
-strategies does not require the runner; executing backtests does.
+If you are asked to "run" a strategy in an environment where ClickHouse is not
+running or no data exists, say so and run `start_clickhouse.sh` first rather
+than reporting a failed run as a strategy result.
 
 ## Environment Configuration
 
-**Cloud environment**: PostgreSQL 16 is available (`localhost:5432`). Use for
-strategy metadata, backtest archival, and analysis results. See
-**[POSTGRES_SETUP.md](POSTGRES_SETUP.md)**.
+**Cloud environment**:
+- ClickHouse 24.3.3.102 installed (`/usr/bin/clickhouse-server`); start with
+  `bash scripts/start_clickhouse.sh`. Credentials: user `quant`, password
+  `quant`, database `market`. The `klines_1m` table is pre-created.
+- PostgreSQL 16 is available (`localhost:5432`). Use for strategy metadata,
+  backtest archival, and analysis results. See **[POSTGRES_SETUP.md](POSTGRES_SETUP.md)**.
 
 **Local development**: See **[LOCAL_SETUP.md](LOCAL_SETUP.md)** for step-by-step
 ClickHouse installation (Docker Compose, Homebrew, or system packages).
@@ -123,6 +137,7 @@ types. **This still requires a runnable runner binary** (it shells out to
 
 ### 4. Prepare market data (only the window you need)
 
+**With real data API** (requires `data.becole.com` in egress allowlist):
 ```bash
 python3 scripts/sync_data_api_klines.py \
   --exchange binance_um_futures --symbol BTCUSDT \
@@ -132,6 +147,20 @@ python3 scripts/sync_data_api_klines.py \
 Do **not** sync the whole market. The script creates `market.klines_1m` if
 needed, checks existing local coverage, and fetches only missing days from
 `DATA_API_URL`. Use `--insecure` / `DATA_API_SSL_VERIFY=false` for cert issues.
+
+**With synthetic data** (cloud-safe, for pipeline testing only):
+```bash
+# 7-day window + 7-day warmup
+python3 scripts/gen_synthetic_klines.py \
+  --start 2026-06-03T00:00:00Z --end 2026-06-11T00:00:00Z
+
+# Full 6-month range with warmup (needed for monthly runs)
+python3 scripts/gen_synthetic_klines.py \
+  --start 2025-11-24T00:00:00Z --end 2026-06-21T00:00:00Z
+```
+
+Synthetic data uses GBM with a fixed seed. Strategy results will show
+unrealistic performance — use real data for any meaningful evaluation.
 
 ### 5. Run backtests
 
@@ -219,13 +248,24 @@ Numeric fields are commonly **strings** (e.g. `"leverage": "10"`,
 
 - The runner binary is platform-specific (see "Platform Caveat"); a missing or
   incompatible binary makes both `validate_strategy.py` and any backtest fail.
-- Backtests need both a compatible runner **and** populated ClickHouse data for
-  the exact window — sync first.
+- **ClickHouse does not auto-start in the cloud.** Run `bash scripts/start_clickhouse.sh`
+  at the start of each session. The runner will fail with "Connection refused" otherwise.
+- The runner requires **warmup bars before the `--start` date**: ~300 bars at
+  the configured `--interval`. For `--interval 15m`, start data at least 4 days
+  before the backtest window.
+- Backtests need both a running ClickHouse **and** data covering the window plus
+  warmup. Use `gen_synthetic_klines.py` for testing or `sync_data_api_klines.py`
+  with a real data API.
+- `data.becole.com` is blocked by egress in the cloud. Add it to your egress
+  allowlist at https://code.claude.com/docs/en/claude-code-on-the-web to enable
+  real market data sync. Until then, use synthetic data for pipeline testing.
 - `monthly` mode resets state per month; only `continuous` reflects real
   operation.
 - The catalog — not older JSON examples — defines what fields are legal. If a
   feature is missing from the catalog, it must be added to the engine first; do
   not invent JSON fields.
+- `position_pct` is capped at 100 in the current runner. Values above 100 in
+  older strategy files must be reduced.
 - See `BUG_REPORT_cash_basis.md`: realized PnL / final equity reported by the
   runner may be affected by a known `cash_basis` margin-accounting bug. Be
   cautious when interpreting absolute PnL until that is resolved upstream.
