@@ -1,0 +1,166 @@
+{
+  "name": "macd_golden_atr_4h_10x",
+  "position_mode": "switch",
+  "basic": {
+    "exchange": "binance_um_futures",
+    "symbol": "BTCUSDT",
+    "initial_capital": "1000",
+    "leverage": "10",
+    "compound_profit": false
+  },
+  "signals": [
+    {
+      "signal_id": "macd_long",
+      "signal_type": "single",
+      "indicator_id": "macd",
+      "version": "1",
+      "interval": "4h",
+      "params": {"fast": 12, "slow": 26, "signal": 9},
+      "trigger": "golden_cross"
+    },
+    {
+      "signal_id": "macd_short",
+      "signal_type": "single",
+      "indicator_id": "macd",
+      "version": "1",
+      "interval": "4h",
+      "params": {"fast": 12, "slow": 26, "signal": 9},
+      "trigger": "death_cross"
+    },
+    {
+      "signal_id": "atr14",
+      "signal_type": "single",
+      "indicator_id": "atr",
+      "version": "1",
+      "interval": "4h",
+      "params": {"period": 14},
+      "condition_operator": "none"
+    },
+    {
+      "signal_id": "long_exit",
+      "signal_type": "position_indicator",
+      "position_metric": "atr",
+      "atr_signal": "atr14",
+      "atr_operator": "price_lte",
+      "atr_reference": "highest_since_entry",
+      "atr_multiplier": "1.5"
+    },
+    {
+      "signal_id": "short_exit",
+      "signal_type": "position_indicator",
+      "position_metric": "atr",
+      "atr_signal": "atr14",
+      "atr_operator": "price_gte",
+      "atr_reference": "lowest_since_entry",
+      "atr_multiplier": "1.5"
+    }
+  ],
+  "long": {
+    "entry_rules": [
+      {
+        "entry_rule_id": "e_long",
+        "enabled": true,
+        "sequence": 1,
+        "trigger_signal": "macd_long",
+        "position_pct": "100",
+        "priority": 100
+      }
+    ],
+    "exit_rules": [
+      {
+        "exit_rule_id": "x_long",
+        "enabled": true,
+        "priority": 90,
+        "quantity": "full_position",
+        "exit_action": "stop_loss",
+        "trigger_signal": "long_exit"
+      }
+    ]
+  },
+  "short": {
+    "entry_rules": [
+      {
+        "entry_rule_id": "e_short",
+        "enabled": true,
+        "sequence": 1,
+        "trigger_signal": "macd_short",
+        "position_pct": "100",
+        "priority": 100
+      }
+    ],
+    "exit_rules": [
+      {
+        "exit_rule_id": "x_short",
+        "enabled": true,
+        "priority": 90,
+        "quantity": "full_position",
+        "exit_action": "stop_loss",
+        "trigger_signal": "short_exit"
+      }
+    ]
+  },
+  "switch_rules": [
+    {
+      "switch_rule_id": "flat_long",
+      "enabled": true,
+      "from_side": "flat",
+      "to_side": "long",
+      "trigger_signal": "macd_long",
+      "close_quantity": "full_position",
+      "next_entry_sequence": 1,
+      "open_policy": "wait_entry_signal",
+      "priority": 100
+    },
+    {
+      "switch_rule_id": "flat_short",
+      "enabled": true,
+      "from_side": "flat",
+      "to_side": "short",
+      "trigger_signal": "macd_short",
+      "close_quantity": "full_position",
+      "next_entry_sequence": 1,
+      "open_policy": "wait_entry_signal",
+      "priority": 100
+    },
+    {
+      "switch_rule_id": "long_short",
+      "enabled": true,
+      "from_side": "long",
+      "to_side": "short",
+      "trigger_signal": "macd_short",
+      "close_quantity": "full_position",
+      "next_entry_sequence": 1,
+      "open_policy": "wait_entry_signal",
+      "priority": 100
+    },
+    {
+      "switch_rule_id": "short_long",
+      "enabled": true,
+      "from_side": "short",
+      "to_side": "long",
+      "trigger_signal": "macd_long",
+      "close_quantity": "full_position",
+      "next_entry_sequence": 1,
+      "open_policy": "wait_entry_signal",
+      "priority": 100
+    }
+  ],
+  "strategy_risk_rules": [
+    {
+      "risk_rule_id": "cooldown_after_exit",
+      "enabled": true,
+      "rule_type": "cooldown_bars",
+      "value": 2,
+      "after_event": "any_exit_fill",
+      "applies_to": "entry_and_switch",
+      "priority": 100
+    },
+    {
+      "risk_rule_id": "max_exposure",
+      "enabled": true,
+      "rule_type": "max_exposure_percent",
+      "threshold_pct": 100,
+      "priority": 1
+    }
+  ]
+}
