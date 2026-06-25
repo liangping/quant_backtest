@@ -1,5 +1,5 @@
 {
-  "name": "ema_adaptive_regime_10x",
+  "name": "ema_adaptive_regime_10x_solusdt",
   "position_mode": "switch",
   "basic": {
     "exchange": "binance_um_futures",
