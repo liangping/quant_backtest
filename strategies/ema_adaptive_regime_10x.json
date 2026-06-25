@@ -28,6 +28,24 @@
       "trigger": "price_cross_below"
     },
     {
+      "signal_id": "price_cross_ema50_up",
+      "signal_type": "single",
+      "indicator_id": "ema",
+      "version": "1",
+      "interval": "1h",
+      "params": {"period": 50},
+      "trigger": "price_cross_above"
+    },
+    {
+      "signal_id": "price_cross_ema50_dn",
+      "signal_type": "single",
+      "indicator_id": "ema",
+      "version": "1",
+      "interval": "1h",
+      "params": {"period": 50},
+      "trigger": "price_cross_below"
+    },
+    {
       "signal_id": "ema100_above",
       "signal_type": "single",
       "indicator_id": "ema",
@@ -96,59 +114,59 @@
       "expression_value": "atr50"
     },
     {
-      "signal_id": "trending_strong",
+      "signal_id": "adx_very_strong",
       "signal_type": "expression",
       "expression": "adx14",
       "expression_operator": "gte",
       "expression_value": "30"
     },
     {
-      "signal_id": "trending_mild",
+      "signal_id": "adx_mild",
       "signal_type": "expression",
       "expression": "adx14",
       "expression_operator": "lt",
       "expression_value": "30"
     },
     {
-      "signal_id": "long_entry_strong_trend",
+      "signal_id": "long_entry_trending",
       "signal_type": "composite",
       "operator": "all",
       "conditions": [
-        {"ref": "price_cross_ema20_up", "ref_type": "user_signal"},
+        {"ref": "price_cross_ema50_up", "ref_type": "user_signal"},
         {"ref": "ema100_above", "ref_type": "user_signal"},
-        {"ref": "trending_strong", "ref_type": "user_signal"}
+        {"ref": "adx_very_strong", "ref_type": "user_signal"}
       ]
     },
     {
-      "signal_id": "short_entry_strong_trend",
+      "signal_id": "short_entry_trending",
       "signal_type": "composite",
       "operator": "all",
       "conditions": [
-        {"ref": "price_cross_ema20_dn", "ref_type": "user_signal"},
+        {"ref": "price_cross_ema50_dn", "ref_type": "user_signal"},
         {"ref": "ema100_below", "ref_type": "user_signal"},
-        {"ref": "trending_strong", "ref_type": "user_signal"}
+        {"ref": "adx_very_strong", "ref_type": "user_signal"}
       ]
     },
     {
-      "signal_id": "long_entry_mild_trend",
+      "signal_id": "long_entry_choppy",
       "signal_type": "composite",
       "operator": "all",
       "conditions": [
         {"ref": "price_cross_ema20_up", "ref_type": "user_signal"},
         {"ref": "ema100_above", "ref_type": "user_signal"},
         {"ref": "adx_strong", "ref_type": "user_signal"},
-        {"ref": "trending_mild", "ref_type": "user_signal"}
+        {"ref": "adx_mild", "ref_type": "user_signal"}
       ]
     },
     {
-      "signal_id": "short_entry_mild_trend",
+      "signal_id": "short_entry_choppy",
       "signal_type": "composite",
       "operator": "all",
       "conditions": [
         {"ref": "price_cross_ema20_dn", "ref_type": "user_signal"},
         {"ref": "ema100_below", "ref_type": "user_signal"},
         {"ref": "adx_strong", "ref_type": "user_signal"},
-        {"ref": "trending_mild", "ref_type": "user_signal"}
+        {"ref": "adx_mild", "ref_type": "user_signal"}
       ]
     },
     {
@@ -191,18 +209,18 @@
   "long": {
     "entry_rules": [
       {
-        "entry_rule_id": "e_long_strong",
+        "entry_rule_id": "e_long_trending",
         "enabled": true,
         "sequence": 1,
-        "trigger_signal": "long_entry_strong_trend",
+        "trigger_signal": "long_entry_trending",
         "position_pct": "50",
         "priority": 101
       },
       {
-        "entry_rule_id": "e_long_mild",
+        "entry_rule_id": "e_long_choppy",
         "enabled": true,
-        "sequence": 1,
-        "trigger_signal": "long_entry_mild_trend",
+        "sequence": 2,
+        "trigger_signal": "long_entry_choppy",
         "position_pct": "50",
         "priority": 100
       }
@@ -231,18 +249,18 @@
   "short": {
     "entry_rules": [
       {
-        "entry_rule_id": "e_short_strong",
+        "entry_rule_id": "e_short_trending",
         "enabled": true,
         "sequence": 1,
-        "trigger_signal": "short_entry_strong_trend",
+        "trigger_signal": "short_entry_trending",
         "position_pct": "50",
-        "priority": 100
+        "priority": 101
       },
       {
-        "entry_rule_id": "e_short_mild",
+        "entry_rule_id": "e_short_choppy",
         "enabled": true,
-        "sequence": 1,
-        "trigger_signal": "short_entry_mild_trend",
+        "sequence": 2,
+        "trigger_signal": "short_entry_choppy",
         "position_pct": "50",
         "priority": 100
       }
@@ -270,88 +288,88 @@
   },
   "switch_rules": [
     {
-      "switch_rule_id": "flat_long_strong",
+      "switch_rule_id": "flat_long_trending",
       "enabled": true,
       "from_side": "flat",
       "to_side": "long",
-      "trigger_signal": "long_entry_strong_trend",
+      "trigger_signal": "long_entry_trending",
       "close_quantity": "full_position",
       "next_entry_sequence": 1,
       "open_policy": "wait_entry_signal",
       "priority": 100
     },
     {
-      "switch_rule_id": "flat_long_mild",
+      "switch_rule_id": "flat_long_choppy",
       "enabled": true,
       "from_side": "flat",
       "to_side": "long",
-      "trigger_signal": "long_entry_mild_trend",
+      "trigger_signal": "long_entry_choppy",
       "close_quantity": "full_position",
       "next_entry_sequence": 1,
       "open_policy": "wait_entry_signal",
       "priority": 100
     },
     {
-      "switch_rule_id": "flat_short_strong",
+      "switch_rule_id": "flat_short_trending",
       "enabled": true,
       "from_side": "flat",
       "to_side": "short",
-      "trigger_signal": "short_entry_strong_trend",
+      "trigger_signal": "short_entry_trending",
       "close_quantity": "full_position",
       "next_entry_sequence": 1,
       "open_policy": "wait_entry_signal",
       "priority": 100
     },
     {
-      "switch_rule_id": "flat_short_mild",
+      "switch_rule_id": "flat_short_choppy",
       "enabled": true,
       "from_side": "flat",
       "to_side": "short",
-      "trigger_signal": "short_entry_mild_trend",
+      "trigger_signal": "short_entry_choppy",
       "close_quantity": "full_position",
       "next_entry_sequence": 1,
       "open_policy": "wait_entry_signal",
       "priority": 100
     },
     {
-      "switch_rule_id": "long_short_strong",
+      "switch_rule_id": "long_short_trending",
       "enabled": true,
       "from_side": "long",
       "to_side": "short",
-      "trigger_signal": "short_entry_strong_trend",
+      "trigger_signal": "short_entry_trending",
       "close_quantity": "full_position",
       "next_entry_sequence": 1,
       "open_policy": "wait_entry_signal",
       "priority": 100
     },
     {
-      "switch_rule_id": "long_short_mild",
+      "switch_rule_id": "long_short_choppy",
       "enabled": true,
       "from_side": "long",
       "to_side": "short",
-      "trigger_signal": "short_entry_mild_trend",
+      "trigger_signal": "short_entry_choppy",
       "close_quantity": "full_position",
       "next_entry_sequence": 1,
       "open_policy": "wait_entry_signal",
       "priority": 100
     },
     {
-      "switch_rule_id": "short_long_strong",
+      "switch_rule_id": "short_long_trending",
       "enabled": true,
       "from_side": "short",
       "to_side": "long",
-      "trigger_signal": "long_entry_strong_trend",
+      "trigger_signal": "long_entry_trending",
       "close_quantity": "full_position",
       "next_entry_sequence": 1,
       "open_policy": "wait_entry_signal",
       "priority": 100
     },
     {
-      "switch_rule_id": "short_long_mild",
+      "switch_rule_id": "short_long_choppy",
       "enabled": true,
       "from_side": "short",
       "to_side": "long",
-      "trigger_signal": "long_entry_mild_trend",
+      "trigger_signal": "long_entry_choppy",
       "close_quantity": "full_position",
       "next_entry_sequence": 1,
       "open_policy": "wait_entry_signal",
