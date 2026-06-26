@@ -12,3 +12,4 @@ data/*
 !data/backtest_reports/
 data/backtest_reports/*
 !data/backtest_reports/.gitkeep
+clickhouse

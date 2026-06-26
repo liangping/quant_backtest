@@ -1,0 +1,184 @@
+{
+  "name": "ema20_ema50_trend_10x",
+  "position_mode": "switch",
+  "basic": {
+    "exchange": "binance_um_futures",
+    "symbol": "BTCUSDT",
+    "initial_capital": "1000",
+    "leverage": "10",
+    "compound_profit": false
+  },
+  "signals": [
+    {
+      "signal_id": "ema_cross_2050_up",
+      "signal_type": "single",
+      "indicator_id": "ema_cross",
+      "version": "1",
+      "interval": "1h",
+      "params": {"fast": 20, "slow": 50},
+      "trigger": "golden_cross"
+    },
+    {
+      "signal_id": "ema_cross_2050_dn",
+      "signal_type": "single",
+      "indicator_id": "ema_cross",
+      "version": "1",
+      "interval": "1h",
+      "params": {"fast": 20, "slow": 50},
+      "trigger": "death_cross"
+    },
+    {
+      "signal_id": "adx_strong",
+      "signal_type": "single",
+      "indicator_id": "adx",
+      "version": "1",
+      "interval": "1h",
+      "params": {"period": 14},
+      "trigger": "trend_strong"
+    },
+    {
+      "signal_id": "long_entry",
+      "signal_type": "composite",
+      "operator": "all",
+      "conditions": [
+        {"ref": "ema_cross_2050_up", "ref_type": "user_signal"},
+        {"ref": "adx_strong", "ref_type": "user_signal"}
+      ]
+    },
+    {
+      "signal_id": "short_entry",
+      "signal_type": "composite",
+      "operator": "all",
+      "conditions": [
+        {"ref": "ema_cross_2050_dn", "ref_type": "user_signal"},
+        {"ref": "adx_strong", "ref_type": "user_signal"}
+      ]
+    },
+    {
+      "signal_id": "long_exit",
+      "signal_type": "single",
+      "indicator_id": "ema_cross",
+      "version": "1",
+      "interval": "1h",
+      "params": {"fast": 20, "slow": 50},
+      "trigger": "death_cross"
+    },
+    {
+      "signal_id": "short_exit",
+      "signal_type": "single",
+      "indicator_id": "ema_cross",
+      "version": "1",
+      "interval": "1h",
+      "params": {"fast": 20, "slow": 50},
+      "trigger": "golden_cross"
+    }
+  ],
+  "long": {
+    "entry_rules": [
+      {
+        "entry_rule_id": "e_long",
+        "enabled": true,
+        "sequence": 1,
+        "trigger_signal": "long_entry",
+        "position_pct": "100",
+        "priority": 100
+      }
+    ],
+    "exit_rules": [
+      {
+        "exit_rule_id": "x_long_trend_reversal",
+        "enabled": true,
+        "priority": 90,
+        "quantity": "full_position",
+        "exit_action": "take_profit",
+        "trigger_signal": "long_exit"
+      }
+    ]
+  },
+  "short": {
+    "entry_rules": [
+      {
+        "entry_rule_id": "e_short",
+        "enabled": true,
+        "sequence": 1,
+        "trigger_signal": "short_entry",
+        "position_pct": "100",
+        "priority": 100
+      }
+    ],
+    "exit_rules": [
+      {
+        "exit_rule_id": "x_short_trend_reversal",
+        "enabled": true,
+        "priority": 90,
+        "quantity": "full_position",
+        "exit_action": "take_profit",
+        "trigger_signal": "short_exit"
+      }
+    ]
+  },
+  "switch_rules": [
+    {
+      "switch_rule_id": "flat_long",
+      "enabled": true,
+      "from_side": "flat",
+      "to_side": "long",
+      "trigger_signal": "long_entry",
+      "close_quantity": "full_position",
+      "next_entry_sequence": 1,
+      "open_policy": "wait_entry_signal",
+      "priority": 100
+    },
+    {
+      "switch_rule_id": "flat_short",
+      "enabled": true,
+      "from_side": "flat",
+      "to_side": "short",
+      "trigger_signal": "short_entry",
+      "close_quantity": "full_position",
+      "next_entry_sequence": 1,
+      "open_policy": "wait_entry_signal",
+      "priority": 100
+    },
+    {
+      "switch_rule_id": "long_short",
+      "enabled": true,
+      "from_side": "long",
+      "to_side": "short",
+      "trigger_signal": "short_entry",
+      "close_quantity": "full_position",
+      "next_entry_sequence": 1,
+      "open_policy": "wait_entry_signal",
+      "priority": 100
+    },
+    {
+      "switch_rule_id": "short_long",
+      "enabled": true,
+      "from_side": "short",
+      "to_side": "long",
+      "trigger_signal": "long_entry",
+      "close_quantity": "full_position",
+      "next_entry_sequence": 1,
+      "open_policy": "wait_entry_signal",
+      "priority": 100
+    }
+  ],
+  "strategy_risk_rules": [
+    {
+      "risk_rule_id": "cooldown_after_exit",
+      "enabled": true,
+      "rule_type": "cooldown_bars",
+      "value": 3,
+      "after_event": "any_exit_fill",
+      "applies_to": "entry_and_switch",
+      "priority": 100
+    },
+    {
+      "risk_rule_id": "max_exposure",
+      "enabled": true,
+      "rule_type": "max_exposure_percent",
+      "threshold_pct": 100,
+      "priority": 1
+    }
+  ]
+}
