@@ -2,7 +2,9 @@
 
 ## Quick Start
 
-### 1. Start ClickHouse Docker Container
+### 1. Start ClickHouse
+
+**Option A — Docker (preferred):**
 
 ```bash
 docker run -d \
@@ -21,6 +23,40 @@ Verify it's running:
 docker ps | grep clickhouse
 curl -s 'http://quant:quant@127.0.0.1:8123/?query=SELECT%201'
 # Should return: 1
+```
+
+**Option B — Native install (when Docker is unavailable, e.g. cloud/CI environments):**
+
+```bash
+# Download and install packages
+curl -fsSL 'https://packages.clickhouse.com/deb/pool/main/c/clickhouse/clickhouse-common-static_25.5.2.47_amd64.deb' -o /tmp/ch-common.deb
+curl -fsSL 'https://packages.clickhouse.com/deb/pool/main/c/clickhouse/clickhouse-server_25.5.2.47_amd64.deb' -o /tmp/ch-server.deb
+curl -fsSL 'https://packages.clickhouse.com/deb/pool/main/c/clickhouse/clickhouse-client_25.5.2.47_amd64.deb' -o /tmp/ch-client.deb
+DEBIAN_FRONTEND=noninteractive dpkg -i /tmp/ch-common.deb /tmp/ch-server.deb /tmp/ch-client.deb
+
+# Create the quant user
+mkdir -p /etc/clickhouse-server/users.d
+cat > /etc/clickhouse-server/users.d/quant.xml << 'EOF'
+<clickhouse>
+    <users>
+        <quant>
+            <password>quant</password>
+            <networks><ip>::/0</ip></networks>
+            <profile>default</profile>
+            <quota>default</quota>
+            <access_management>1</access_management>
+        </quant>
+    </users>
+</clickhouse>
+EOF
+
+# Start and verify
+clickhouse start
+curl -s 'http://quant:quant@127.0.0.1:8123/?query=SELECT%201'
+# Should return: 1
+
+# Create the market database
+curl -s -X POST 'http://quant:quant@127.0.0.1:8123/' --data 'CREATE DATABASE IF NOT EXISTS market'
 ```
 
 ### 2. Environment Variables
@@ -44,27 +80,17 @@ export BACKTEST_SYMBOL=BTCUSDT
 
 ### 3. Sync Historical Data
 
-Sync data from the data API into ClickHouse:
+Sync data from the data API into ClickHouse. **Always sync at least 1 year at a time** — the script skips days already present, so a wide window is safe and prevents repeated partial syncs.
 
 ```bash
-# Sync BTCUSDT (example: Jun 15 - Sep 3, 2025)
-python3 scripts/sync_data_api_klines.py \
-  --data-api-url "$DATA_API_URL" \
-  --exchange binance_um_futures \
-  --symbol BTCUSDT \
-  --start 2025-06-15 \
-  --end 2025-09-03 \
-  --interval 1m \
-  --limit 10000
-
-# For full year testing (requires multiple syncs)
-for symbol in ETHUSDT SOLUSDT BCHUSDT; do
+# Sync all symbols with a 1-year window (recommended)
+for symbol in BTCUSDT ETHUSDT SOLUSDT BCHUSDT; do
   python3 scripts/sync_data_api_klines.py \
     --data-api-url "$DATA_API_URL" \
     --exchange binance_um_futures \
     --symbol $symbol \
-    --start 2025-06-15 \
-    --end 2026-06-06 \
+    --start 2025-06-01 \
+    --end 2026-06-30 \
     --interval 1m \
     --limit 10000
 done
@@ -125,14 +151,14 @@ tail -1 /tmp/backtest_result.jsonl | jq '.summary'
 | BCHUSDT | 2025-06-15 to 2026-06-06 | ✅ Available |
 | BTCUSDC | 2025-06-15 to 2025-09-02 | ✅ Available (poor performance) |
 
-For **longer historical data** or **different symbols**, sync using:
+For **additional symbols**, sync using at least a 1-year window (safe to re-run; skips existing days):
 ```bash
 python3 scripts/sync_data_api_klines.py \
   --data-api-url https://data.becole.com \
   --exchange binance_um_futures \
   --symbol <SYMBOL> \
-  --start <START_DATE> \
-  --end <END_DATE> \
+  --start 2025-06-01 \
+  --end 2026-06-30 \
   --interval 1m \
   --limit 10000
 ```
