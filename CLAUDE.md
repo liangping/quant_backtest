@@ -212,6 +212,59 @@ sleep 10
 
 ## Testing Workflow
 
+### ⚡ 0. FAST VALIDATION: 30-Day Test (RECOMMENDED FIRST STEP)
+
+**Test on recent 30 days FIRST before long-term backtest.** This quickly validates if strategy works in current market conditions.
+
+```bash
+export CLICKHOUSE_USER=quant
+export CLICKHOUSE_PASSWORD=quant
+
+# Determine recent 30-day window (adjust dates based on today)
+# Example: if today is 2026-06-26, test 2026-05-27 to 2026-06-26
+
+START_DATE="2026-05-27T00:00:00Z"
+END_DATE="2026-06-26T23:59:00Z"
+SYMBOL="BTCUSDT"
+
+# Run 30-day test (takes ~1 minute)
+./bin/backtest-live-runner clickhouse-bar-replay \
+  --strategy strategies/ema_adaptive_regime_10x.json \
+  --exchange binance_um_futures \
+  --symbol $SYMBOL \
+  --start $START_DATE \
+  --end $END_DATE \
+  --chunk-size 1000 \
+  --report-jsonl /tmp/validation_30day.jsonl
+
+# View results immediately
+echo "=== 30-DAY VALIDATION RESULTS ==="
+tail -1 /tmp/validation_30day.jsonl | jq '.summary | {
+  return_pct: (.return_pct | tonumber * 100 | round),
+  max_drawdown_pct: (.max_drawdown_pct | tonumber * 100 | round),
+  position_count,
+  win_rate: (.win_rate | tonumber | round),
+  total_pnl: .realized_pnl
+}'
+
+# ✅ Go-Live Decision:
+# - If return > 0% and DD < 50%: Likely safe to deploy
+# - If return < 0%: Strategy failing in current market, needs investigation
+# - If positions < 3: Insufficient sample, extend test window or adjust
+```
+
+**Validation Checklist:**
+- [ ] Positive return (ideally > 2% per 30 days)
+- [ ] Drawdown < 50% of account
+- [ ] At least 5+ positions (sample size)
+- [ ] Win rate > 40%
+
+**Example Recent Results:**
+- ✅ BTCUSDT (Jun 15 - Sep 3, 2025): +30.82% return → Expected +2.5%/month
+- ❌ BTCUSDT (May 27 - Jun 26, 2026): -7.82% return → Strategy failing in current market
+
+---
+
 ### 1. Quick Test (Single Symbol, Short Period)
 ```bash
 ./bin/backtest-live-runner clickhouse-bar-replay \
