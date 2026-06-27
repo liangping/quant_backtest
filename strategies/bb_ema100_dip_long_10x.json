@@ -1,0 +1,166 @@
+{
+  "name": "bb_ema100_dip_long_10x",
+  "position_mode": "long_only",
+  "basic": {
+    "exchange": "binance_um_futures",
+    "symbol": "BTCUSDT",
+    "initial_capital": "1000",
+    "leverage": "10",
+    "compound_profit": false
+  },
+  "signals": [
+    {
+      "signal_id": "bb_cross_below_lower",
+      "signal_type": "single",
+      "indicator_id": "bb",
+      "version": "1",
+      "interval": "1h",
+      "params": {"period": 20, "stddev": 2},
+      "trigger": "price_cross_below_lower"
+    },
+    {
+      "signal_id": "bb_cross_above_middle",
+      "signal_type": "single",
+      "indicator_id": "bb",
+      "version": "1",
+      "interval": "1h",
+      "params": {"period": 20, "stddev": 2},
+      "trigger": "price_cross_above_middle"
+    },
+    {
+      "signal_id": "ema100_above",
+      "signal_type": "single",
+      "indicator_id": "ema",
+      "version": "1",
+      "interval": "1h",
+      "params": {"period": 100},
+      "trigger": "price_above"
+    },
+    {
+      "signal_id": "adx_strong",
+      "signal_type": "single",
+      "indicator_id": "adx",
+      "version": "1",
+      "interval": "1h",
+      "params": {"period": 14},
+      "trigger": "trend_strong"
+    },
+    {
+      "signal_id": "atr14",
+      "signal_type": "single",
+      "indicator_id": "atr",
+      "version": "1",
+      "interval": "1h",
+      "params": {"period": 14},
+      "condition_operator": "none"
+    },
+    {
+      "signal_id": "atr50",
+      "signal_type": "single",
+      "indicator_id": "atr",
+      "version": "1",
+      "interval": "1h",
+      "params": {"period": 50},
+      "condition_operator": "none"
+    },
+    {
+      "signal_id": "high_volatility",
+      "signal_type": "expression",
+      "expression": "atr14",
+      "expression_operator": "gte",
+      "expression_value": "atr50"
+    },
+    {
+      "signal_id": "low_volatility",
+      "signal_type": "expression",
+      "expression": "atr14",
+      "expression_operator": "lt",
+      "expression_value": "atr50"
+    },
+    {
+      "signal_id": "long_entry",
+      "signal_type": "composite",
+      "operator": "all",
+      "conditions": [
+        {"ref": "bb_cross_below_lower", "ref_type": "user_signal"},
+        {"ref": "ema100_above", "ref_type": "user_signal"}
+      ]
+    },
+    {
+      "signal_id": "long_exit_high_vol",
+      "signal_type": "position_indicator",
+      "position_metric": "atr",
+      "atr_signal": "atr14",
+      "atr_operator": "price_lte",
+      "atr_reference": "highest_since_entry",
+      "atr_multiplier": "1.5"
+    },
+    {
+      "signal_id": "long_exit_low_vol",
+      "signal_type": "position_indicator",
+      "position_metric": "atr",
+      "atr_signal": "atr14",
+      "atr_operator": "price_lte",
+      "atr_reference": "highest_since_entry",
+      "atr_multiplier": "0.9"
+    }
+  ],
+  "long": {
+    "entry_rules": [
+      {
+        "entry_rule_id": "e_long",
+        "enabled": true,
+        "sequence": 1,
+        "trigger_signal": "long_entry",
+        "position_pct": "100",
+        "priority": 100
+      }
+    ],
+    "exit_rules": [
+      {
+        "exit_rule_id": "x_long_tp",
+        "enabled": true,
+        "priority": 80,
+        "quantity": "full_position",
+        "exit_action": "take_profit",
+        "trigger_signal": "bb_cross_above_middle"
+      },
+      {
+        "exit_rule_id": "x_long_high_vol",
+        "enabled": true,
+        "priority": 90,
+        "quantity": "full_position",
+        "exit_action": "stop_loss",
+        "trigger_signal": "long_exit_high_vol",
+        "condition_signal": "high_volatility"
+      },
+      {
+        "exit_rule_id": "x_long_low_vol",
+        "enabled": true,
+        "priority": 90,
+        "quantity": "full_position",
+        "exit_action": "stop_loss",
+        "trigger_signal": "long_exit_low_vol",
+        "condition_signal": "low_volatility"
+      }
+    ]
+  },
+  "strategy_risk_rules": [
+    {
+      "risk_rule_id": "cooldown",
+      "enabled": true,
+      "rule_type": "cooldown_bars",
+      "value": 2,
+      "after_event": "any_exit_fill",
+      "applies_to": "entry_and_switch",
+      "priority": 100
+    },
+    {
+      "risk_rule_id": "max_exposure",
+      "enabled": true,
+      "rule_type": "max_exposure_percent",
+      "threshold_pct": 100,
+      "priority": 1
+    }
+  ]
+}

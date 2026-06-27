@@ -186,8 +186,10 @@ python3 scripts/sync_data_api_klines.py \
 | ema_roc_adx_dual_ema100_10x | +11.11% | 14.24% | 15 | 53% | ADX≥30 too strict |
 | ema_baseline_strict_filter_10x | +5.33% | 17.80% | 19 | 47% | EMA100 in trending blocks recovery |
 | ema_adaptive_regime_compound_10x | +33.33% | 21.79% | 25 | 52% | compound amplifies both directions |
+| bb_breakout_long_10x | +26.97% | 13.76% | 16 | 50% | BB upper cross+EMA100+ADX; ETH blow-up |
 | macd_abovezero_roc_ema200_long_10x | +20.7% | 20.4% | 16 | 44% | best long-only |
 | With EMA200 filter | +1% | 13% | 15 | - | EMA200 too restrictive |
+| bb_ema100_dip_long_10x | +2.54% | 8.83% | 4 | 50% | BB lower+EMA100; too few entries |
 
 ### ETHUSDT (Jun 15, 2025 - Jun 6, 2026 — bull+bear full year)
 | Strategy | Return | DD | Positions | Win Rate | Notes |
@@ -449,6 +451,9 @@ Extensive exploration (20+ strategies tested) of novel indicator combinations. N
 | macd_golden_ema100_adx_switch_10x | MACD cross + EMA100 + ADX | -32% all-short | - | ADX directional bias |
 | roc_cross_adx_switch_10x | ROC zero cross + EMA100 + ADX | -21% all-long | - | No short signal |
 | macd_abovezero_ema200_di_switch_10x | MACD above-zero cross + DI | -90% all-short | -100% | above_zero cross too rare |
+| bb_rsi_long_only_10x | BB lower cross edge + RSI oversold (≤30) + EMA100 | 0% (0 pos) | +4.83% (1 pos) | RSI≤30 never fires in BTC bull |
+| bb_ema100_dip_long_10x | BB lower cross + EMA100 (no RSI) | +2.54% (4 pos) | -63.3% (40 pos) | Too few BTC entries; mean reversion fails bear ETH |
+| bb_breakout_long_10x | BB upper breakout + EMA100 + ADX | +26.97% (16 pos) | -96.2% (84 pos) | Bear-market rallies give false upper breakouts |
 
 ### Key Signal Learnings
 - **MACD `above_zero_golden_cross`**: Never fires in sustained uptrends (MACD stays above signal)
@@ -458,6 +463,11 @@ Extensive exploration (20+ strategies tested) of novel indicator combinations. N
 - **ROC `positive/negative` state**: Good directional filter in trending markets; fails in bear market dead-cat bounces
 - **CHOP `trending` state**: Too rarely true in crypto — only 3 entries on BTC in 2.5 months
 - **`compound_profit: true`**: Amplifies sequence dependency — avoid in multi-regime markets
+- **BB lower band (2 stddev) at 1h**: Only breached 4 times on BTC in 2.5 months — too rare for a standalone strategy
+- **RSI oversold (≤30) at 1h**: Essentially never fires in bull markets (BTC Jun-Sep 2025 = 0 events) — useless as a primary filter
+- **BB upper breakout at 1h**: Good BTC bull signal (+27%) but ETH bear-market rallies create false entries → account blow-up (-96%); needs a stronger macro bear filter than EMA100
+- **BB mean reversion (long only)**: ETH generates 40 entries but -63% return — downtrend continuation beats mean reversion; EMA100 filter is insufficient for bear market
+- **BB strategies at 1h**: Structurally inferior to EMA crossovers for this dataset — EMA signals align with medium-term directional trends while BB extremes measure short-term deviation that can persist indefinitely in trending markets
 
 ---
 
