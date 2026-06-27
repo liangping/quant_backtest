@@ -1,0 +1,152 @@
+{
+  "name": "chop_trend_ema200_long_10x",
+  "position_mode": "long_only",
+  "basic": {
+    "exchange": "binance_um_futures",
+    "symbol": "BTCUSDT",
+    "initial_capital": "1000",
+    "leverage": "10",
+    "compound_profit": true
+  },
+  "signals": [
+    {
+      "signal_id": "chop_enters_trending",
+      "signal_type": "single",
+      "indicator_id": "chop",
+      "version": "1",
+      "interval": "1h",
+      "params": {"period": 14},
+      "trigger": "cross_below_trending"
+    },
+    {
+      "signal_id": "plus_di_above_1h",
+      "signal_type": "single",
+      "indicator_id": "adx",
+      "version": "1",
+      "interval": "1h",
+      "params": {"period": 14},
+      "trigger": "plus_di_above_minus_di"
+    },
+    {
+      "signal_id": "ema200_above_1h",
+      "signal_type": "single",
+      "indicator_id": "ema",
+      "version": "1",
+      "interval": "1h",
+      "params": {"period": 200},
+      "trigger": "price_above"
+    },
+    {
+      "signal_id": "atr14_1h",
+      "signal_type": "single",
+      "indicator_id": "atr",
+      "version": "1",
+      "interval": "1h",
+      "params": {"period": 14},
+      "condition_operator": "none"
+    },
+    {
+      "signal_id": "atr50_1h",
+      "signal_type": "single",
+      "indicator_id": "atr",
+      "version": "1",
+      "interval": "1h",
+      "params": {"period": 50},
+      "condition_operator": "none"
+    },
+    {
+      "signal_id": "high_vol",
+      "signal_type": "expression",
+      "expression": "atr14_1h",
+      "expression_operator": "gte",
+      "expression_value": "atr50_1h"
+    },
+    {
+      "signal_id": "low_vol",
+      "signal_type": "expression",
+      "expression": "atr14_1h",
+      "expression_operator": "lt",
+      "expression_value": "atr50_1h"
+    },
+    {
+      "signal_id": "long_entry",
+      "signal_type": "composite",
+      "operator": "all",
+      "conditions": [
+        {"ref": "chop_enters_trending", "ref_type": "user_signal"},
+        {"ref": "plus_di_above_1h", "ref_type": "user_signal"},
+        {"ref": "ema200_above_1h", "ref_type": "user_signal"}
+      ]
+    },
+    {
+      "signal_id": "exit_high_vol",
+      "signal_type": "position_indicator",
+      "position_metric": "atr",
+      "atr_signal": "atr14_1h",
+      "atr_operator": "price_lte",
+      "atr_reference": "highest_since_entry",
+      "atr_multiplier": "2.0"
+    },
+    {
+      "signal_id": "exit_low_vol",
+      "signal_type": "position_indicator",
+      "position_metric": "atr",
+      "atr_signal": "atr14_1h",
+      "atr_operator": "price_lte",
+      "atr_reference": "highest_since_entry",
+      "atr_multiplier": "3.0"
+    }
+  ],
+  "long": {
+    "entry_rules": [
+      {
+        "entry_rule_id": "e_long",
+        "enabled": true,
+        "sequence": 1,
+        "trigger_signal": "long_entry",
+        "position_pct": "100",
+        "priority": 100
+      }
+    ],
+    "exit_rules": [
+      {
+        "exit_rule_id": "x_high_vol",
+        "enabled": true,
+        "priority": 90,
+        "quantity": "full_position",
+        "exit_action": "stop_loss",
+        "trigger_signal": "exit_high_vol",
+        "condition_signal": "high_vol"
+      },
+      {
+        "exit_rule_id": "x_low_vol",
+        "enabled": true,
+        "priority": 90,
+        "quantity": "full_position",
+        "exit_action": "stop_loss",
+        "trigger_signal": "exit_low_vol",
+        "condition_signal": "low_vol"
+      }
+    ]
+  },
+  "short": {"entry_rules": [], "exit_rules": []},
+  "switch_rules": [],
+  "strategy_risk_rules": [
+    {
+      "risk_rule_id": "cooldown",
+      "enabled": true,
+      "rule_type": "cooldown_bars",
+      "value": 2,
+      "after_event": "any_exit_fill",
+      "applies_to": "entry",
+      "priority": 100
+    },
+    {
+      "risk_rule_id": "max_exposure",
+      "enabled": true,
+      "rule_type": "max_exposure_percent",
+      "threshold_pct": 100,
+      "priority": 1
+    }
+  ]
+}
