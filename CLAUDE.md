@@ -124,11 +124,18 @@ tail -1 /tmp/backtest_result.jsonl | jq '.summary'
 
 ### Production Ready
 
-- **`ema_adaptive_regime_10x.json`** ⭐ RECOMMENDED for BTCUSDT
-  - Entry: EMA50/EMA20 crossovers + ADX trend confirmation
-  - Exit: ATR-based trailing stops (1.5x high vol, 0.9x low vol)
-  - Performance: +30.82% on BTCUSDT (Jun-Sep 2025)
-  - Best for: Bull/trending markets
+- **`ema_adaptive_regime_10x.json`** ⭐ RECOMMENDED (best overall)
+  - Switch strategy: EMA50/EMA20 dual-regime crossovers + ADX trend filter
+  - Entry: EMA50 cross (trending) OR EMA20 cross + EMA100 direction (choppy)
+  - Exit: ATR trailing stops (1.5x high vol, 0.9x low vol) — adaptive by volatility
+  - BTC: +30.82%, 16.26% DD, 25 positions (Jun 15 - Sep 2, 2025)
+  - ETH: +32.75%, 38.79% DD, 127 positions (Jun 15 - Jun 6, 2026)
+
+- **`ema_roc_adx_dual_switch_10x.json`** ⭐ BEST on BTCUSDT
+  - Switch strategy: dual-regime with ROC direction instead of EMA100 filter
+  - Entry: EMA50 cross + ADX≥30 (trending) OR EMA20 cross + ROC + ADX≥25 (momentum)
+  - BTC: +35.03%, 18.21% DD, 28 positions (Jun 15 - Sep 2, 2025) — beats baseline
+  - ETH: -4.28%, 70% DD (Jun 15 - Jun 6, 2026) — fails in bear market (ROC allows false longs)
 
 ### Testing & Research
 
@@ -138,6 +145,8 @@ tail -1 /tmp/backtest_result.jsonl | jq '.summary'
 - **`ema_adaptive_regime_trend_filter_10x_bchusdt.json`** - Adds EMA200(1h) macro trend filter for BCH
 - **`ema_adaptive_volatility_simple_10x.json`** - Volatility-adaptive exits (experimental)
 - **`ema_adaptive_position_sizing_10x.json`** - Position sizing by volatility (experimental)
+
+### Explored — Failed or Suboptimal (see Strategy Exploration Findings below)
 
 ---
 
@@ -167,17 +176,29 @@ python3 scripts/sync_data_api_klines.py \
 
 ## Strategy Performance Summary
 
-### BTCUSDT (Best Performer)
-| Strategy | Period | Return | DD | Positions |
-|----------|--------|--------|----|----|
-| ema_adaptive_regime_10x (baseline) | Jun 15 - Sep 3, 2025 | +30.82% | 16.26% | 25 |
-| With EMA200 filter | (6-15 - Sep 3, 2025 | +1% | 13% | 15 |
+### BTCUSDT (Jun 15 - Sep 2, 2025 — all-bull period)
+| Strategy | Return | DD | Positions | Win Rate | Notes |
+|----------|--------|-----|-----------|---------|-------|
+| **ema_roc_adx_dual_switch_10x** | **+35.03%** | 18.21% | 28 | 50% | ⭐ Best BTC |
+| ema_adaptive_regime_10x (baseline) | +30.82% | 16.26% | 25 | 52% | benchmark |
+| ema_baseline_wider_exits_10x | +30.22% | 19.38% | 26 | 42% | wider exits hurt DD |
+| ema_baseline_roc_filter_10x | +27.06% | 16.26% | 21 | 52% | ROC reduces entries |
+| ema_roc_adx_dual_ema100_10x | +11.11% | 14.24% | 15 | 53% | ADX≥30 too strict |
+| ema_baseline_strict_filter_10x | +5.33% | 17.80% | 19 | 47% | EMA100 in trending blocks recovery |
+| ema_adaptive_regime_compound_10x | +33.33% | 21.79% | 25 | 52% | compound amplifies both directions |
+| macd_abovezero_roc_ema200_long_10x | +20.7% | 20.4% | 16 | 44% | best long-only |
+| With EMA200 filter | +1% | 13% | 15 | - | EMA200 too restrictive |
 
-### ETHUSDT (Good Performer)
-| Strategy | Period | Return | DD | Positions |
-|----------|--------|--------|----|----|
-| ema_adaptive_regime_10x (baseline) | Jun 15 - Jun 6, 2026 | +32.7% | 38.8% | 127 |
-| ema_adaptive_regime_5x | Jun 15 - Jun 6, 2026 | +16.4% | 23.0% | 127 |
+### ETHUSDT (Jun 15, 2025 - Jun 6, 2026 — bull+bear full year)
+| Strategy | Return | DD | Positions | Win Rate | Notes |
+|----------|--------|-----|-----------|---------|-------|
+| **ema_adaptive_regime_10x (baseline)** | **+32.75%** | 38.79% | 127 | 50% | ⭐ Best ETH |
+| ema_adaptive_regime_5x | +16.4% | 23.0% | 127 | - | lower leverage |
+| ema_adaptive_regime_compound_10x | -25.16% | 65.19% | 127 | 50% | bull gains → bigger bear losses |
+| ema_roc_adx_dual_switch_10x | -4.28% | 70% | 120 | 48% | ROC allows false longs in bear |
+| ema_baseline_strict_filter_10x | -67.67% | 78.66% | 95 | 45% | blocks early recovery longs |
+| ema_baseline_roc_filter_10x | -86.84% | 90.24% | 81 | 38% | ROC wrong for ETH |
+| ema_baseline_wider_exits_10x | -90.21% | 100.54% | 120 | 39% | blow-up: 0.9x exit is essential |
 
 ### SOLUSDT (Poor Fit - High Volatility)
 | Strategy | Period | Return | DD | Positions |
@@ -350,20 +371,93 @@ echo "With Filter:" && tail -1 /tmp/ema_adaptive_regime_trend_filter_10x_bchusdt
 
 ## Key Insights
 
+### Why the Baseline Works
+The `ema_adaptive_regime_10x` baseline has been extensively stress-tested against 20+ strategy variants. Its design is highly intentional:
+
+1. **Dual-regime entries** (EMA50 trending + EMA20 choppy) generates many quality entries without over-filtering
+2. **Asymmetric EMA100 filter**: choppy regime requires EMA100 direction (blocks bear-phase longs), trending regime does NOT (allows early recovery longs that are most profitable)
+3. **0.9x ATR low-vol exit is critical** — widening this to 1.5x caused -90% ETH blow-up; the tight stop is the main drawdown protection in quiet markets
+4. **`compound_profit: false`** — fixed $10k notional prevents bear-phase losses from compounding (compound_profit: true produced -25% on ETH vs +32.75%)
+5. **ADX≥25 filter** — blocks entries in ranging/choppy markets without requiring directional filter
+
+### Why Other Approaches Fail
+
+**Adding EMA100 to trending regime** (`ema_baseline_strict_filter_10x`): In bull markets and recovering trends, price crosses EMA50 BEFORE recovering above EMA100. Adding EMA100 requirement blocks the most profitable early-recovery entries. BTC: +5.33% vs +30.82%.
+
+**Using ROC in choppy regime** (`ema_roc_adx_dual_switch_10x`): ROC can be briefly positive during dead-cat bounces in bear markets → false longs that then fail. ETH: -4.28% vs +32.75%. (Note: this strategy is best for BTC bull markets: +35.03% vs +30.82%.)
+
+**Wider exits**: The 0.9x ATR low-vol exit is protective, not restrictive. Changing to 1.5x caused ETH to blow up (-90.21%) because losses ran unchecked in quiet bear-market periods.
+
+**Compound profit in bear markets**: `compound_profit: true` amplifies the sequence dependency — bull phase grows equity which means larger position sizes in the subsequent bear phase. ETH: -25.16% vs +32.75%.
+
+**MACD cross signals**: Fire too frequently in crypto (38 positions vs 25 for EMA approach), even with directional filters, generating too many false entries.
+
+**DI crossovers as primary signal**: Fire too rarely (2 positions on BTC over 2.5 months) — too few trades for meaningful returns.
+
+### Return Display — Correct jq Formula
+The raw `return_pct` in summary JSON is a decimal fraction (0.327 = 32.7%). Use this formula:
+```bash
+tail -1 result.jsonl | jq '.summary | {
+  return_pct: (.return_pct | tonumber * 100 | (. * 100 | round) / 100),
+  max_drawdown_pct: (.max_drawdown_pct | tonumber * 100 | (. * 100 | round) / 100),
+  position_count,
+  win_rate: (.win_rate | tonumber * 100 | round / 100)
+}'
+```
+**Wrong** (off by 100x): `tonumber * 100 | round / 100` → shows "0.33" for 32.75%
+**Correct**: `tonumber * 100 | (. * 100 | round) / 100` → shows "32.75"
+
+### Parallel ETH Backtest Timeout
+Running 4+ full-year ETH backtests simultaneously causes resource contention and timeouts at 600s. Run ETH full-year tests **sequentially** with `timeout 900`:
+```bash
+timeout 900 ./bin/backtest-live-runner clickhouse-bar-replay --strategy ... --symbol ETHUSDT --start 2025-06-15T00:00:00Z --end 2026-06-06T23:59:00Z ...
+```
+
 ### When Strategy Works Well
-✅ **Bull/Trending Markets** (BTC Jun-Sep 2025: +30.82%)
-✅ **EMA crossovers line up with real trends** (ETHUSDT: +32.7%)
-✅ **Moderate volatility** (ADX trend detection reliable)
+✅ **Bull/Trending Markets** (BTC Jun-Sep 2025: +30.82%; ETH Jun-Jun: +32.75%)
+✅ **EMA crossovers align with real trends** — ADX filter prevents false signals
+✅ **Moderate volatility** — 0.9x ATR exit protects in low-vol, 1.5x gives room in high-vol
 
 ### When Strategy Fails
 ❌ **Sustained bear markets** (BCH Dec 2025 → Jun 2026: -108%)
 ❌ **High volatility altcoins** (SOL at 10x: -78.6%)
-❌ **Choppy/sideways markets** (false breakouts hurt entry quality)
+❌ **Choppy/sideways markets** (false breakouts, frequent EMA20 crosses)
 
 ### How to Improve
-🔧 **Add macro trend filter** (EMA200 on 1h or daily EMA50)
+🔧 **Use `ema_roc_adx_dual_switch_10x` for BTC**: +35% vs +30.82% baseline (+4.2%)
 🔧 **Reduce leverage** for high-volatility symbols (SOL 3x instead of 10x)
-🔧 **Adjust for market regime** (don't trade bear markets, or use tighter stops)
+🔧 **Add macro trend filter** (EMA200 on 1h) for BCH-type assets in persistent bear markets
+
+---
+
+## Strategy Exploration Findings
+
+Extensive exploration (20+ strategies tested) of novel indicator combinations. No strategy beat the baseline on both BTC and ETH simultaneously.
+
+### Explored Signal Combinations
+| Strategy File | Key Idea | BTC | ETH | Verdict |
+|--------------|---------|-----|-----|---------|
+| ema_roc_adx_dual_switch_10x | ROC replace EMA100 in choppy | **+35%** | -4.3% | Best BTC only |
+| ema_baseline_strict_filter_10x | EMA100 in trending regime too | +5.3% | -67.7% | Too restrictive |
+| ema_baseline_wider_exits_10x | 2.0x/1.5x ATR exits | +30.2% | -90.2% | ETH blow-up |
+| ema_baseline_roc_filter_10x | ROC in both regimes | +27.1% | -86.8% | ROC wrong for ETH |
+| ema_dual_adx30_ema100_10x | ADX≥30 trending + EMA100 choppy | +11.1% | - | ADX≥30 too strict |
+| chop_ema50_roc_switch_10x | CHOP trending state + EMA50 + ROC | -2% (3 pos) | - | Too few entries |
+| ema50_di_ema100_switch_10x | DI direction + EMA50 cross | -53% | -82% | - |
+| di_cross_ema100_adx_switch_10x | DI crossover as primary entry | -2.4% (2 pos) | - | Too few entries |
+| macd_di_ema100_switch_10x | MACD cross + DI direction | -48.4% (38 pos) | - | Too frequent |
+| macd_golden_ema100_adx_switch_10x | MACD cross + EMA100 + ADX | -32% all-short | - | ADX directional bias |
+| roc_cross_adx_switch_10x | ROC zero cross + EMA100 + ADX | -21% all-long | - | No short signal |
+| macd_abovezero_ema200_di_switch_10x | MACD above-zero cross + DI | -90% all-short | -100% | above_zero cross too rare |
+
+### Key Signal Learnings
+- **MACD `above_zero_golden_cross`**: Never fires in sustained uptrends (MACD stays above signal)
+- **MACD `golden_cross`**: Fires too frequently (38 trades per 2.5 months on BTC)
+- **ADX `trend_strong` (ADX≥25)**: Direction-neutral — biases toward shorts in bull markets when used alone
+- **DI crossovers** (`plus_di_cross_above`): Too rare — 2 trades on BTC in 2.5 months
+- **ROC `positive/negative` state**: Good directional filter in trending markets; fails in bear market dead-cat bounces
+- **CHOP `trending` state**: Too rarely true in crypto — only 3 entries on BTC in 2.5 months
+- **`compound_profit: true`**: Amplifies sequence dependency — avoid in multi-regime markets
 
 ---
 
